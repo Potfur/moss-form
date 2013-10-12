@@ -1,0 +1,6 @@
+<?php
+require __DIR__ . '/Loader.php';
+
+$Loader = new \moss\loader\Loader();
+$Loader->addNamespace('moss', array(__DIR__ . '/../lib/', __DIR__ . '/'));
+$Loader->registeR();
