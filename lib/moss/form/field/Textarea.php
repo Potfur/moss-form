@@ -3,7 +3,7 @@ namespace moss\form\field;
 
 use moss\form\AttributesBag;
 use moss\form\ErrorsBag;
-use \moss\form\Field;
+use moss\form\Field;
 
 /**
  * Textarea
@@ -30,7 +30,8 @@ class Textarea extends Field
     {
         $this->name($name);
         $this->value($value);
-        $this->label($label, $required);
+        $this->label($label);
+        $this->required($required);
         $this->attributes = new AttributesBag($attributes);
         $this->errors = new ErrorsBag();
     }

@@ -104,41 +104,10 @@ class Radio extends Field
         );
 
         $options = $this->options->all();
-        if (empty($options)) {
-            $nodes[] = $this->renderBlank();
-        } else {
-            foreach ($options as $Option) {
-                $nodes[] = $this->renderOption($Option);
-            }
-        }
-
+        $nodes[] = empty($options) ? $this->renderBlank() : $this->renderOptions($options);
         $nodes[] = sprintf('</%s>', $this->tag['group']);
 
         return implode("\n", $nodes);
-    }
-
-    /**
-     * @param array                   $nodes
-     * @param array|OptionInterface[] $options
-     * @param bool                    $blank
-     *
-     * @return array
-     */
-    protected function renderOptions($nodes, $options = array(), $blank = false)
-    {
-        if (empty($options)) {
-            if ($blank) {
-                $nodes[] = $this->renderBlank();
-            }
-
-            return $nodes;
-        }
-
-        foreach ($options as $Option) {
-            $nodes[] = $this->renderOption($Option);
-        }
-
-        return $nodes;
     }
 
     /**
@@ -149,11 +118,33 @@ class Radio extends Field
     protected function renderBlank()
     {
         return sprintf(
-            '<%1$s><input type="radio" name="%2$s" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
+            '<%1$s><input type="radio" name="%2$s[]" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
             $this->tag['element'],
             $this->name(),
             $this->identify() . '_empty'
         );
+    }
+
+
+    /**
+     * Renders options
+     *
+     * @param array|OptionInterface[] $options
+     *
+     * @return null|string
+     */
+    protected function renderOptions(array $options)
+    {
+        if (empty($options)) {
+            return null;
+        }
+
+        $nodes = array();
+        foreach ($options as $Option) {
+            $nodes[] = $this->renderOption($Option);
+        }
+
+        return implode("\n", $nodes);
     }
 
     /**
@@ -167,8 +158,21 @@ class Radio extends Field
     {
         $id = $this->identify() . '_' . $Option->identify();
 
+        $sub = null;
+        $options = $Option
+            ->options()
+            ->all();
+
+        if (count($options)) {
+            $sub = sprintf(
+                '<%1$s class="options">%2$s</%1$s>',
+                $this->tag['group'],
+                "\n" . $this->renderOptions($options)
+            );
+        }
+
         $field = sprintf(
-            '<%1$s class="options"><input type="radio" name="%2$s" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
+            '<%1$s class="options"><input type="radio" name="%2$s[]" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
             $this->tag['element'],
             $this->name(),
             $Option->label(),
@@ -176,36 +180,11 @@ class Radio extends Field
             $id,
             $Option
                 ->attributes()
-                ->toString(array('checked' => $Option->value() == $this->value() ? 'checked' : null)),
-            $this->renderSubOptions($Option)
+                ->toString(array('checked' => $Option->value() == $this->value ? 'checked' : null)),
+            $sub
         );
 
         return $field;
-    }
-
-    /**
-     * Renders subn options
-     *
-     * @param OptionInterface $Option
-     *
-     * @return null|string
-     */
-    protected function renderSubOptions(OptionInterface $Option)
-    {
-        $subOptions = $Option
-            ->options()
-            ->all();
-
-        if (empty($subOptions)) {
-            return null;
-        }
-
-        $nodes = array();
-        foreach ($subOptions as $subOption) {
-            $nodes[] = $this->renderOption($subOption);
-        }
-
-        return sprintf('<%1$s class="options">%2$s</%1$s>', $this->tag['group'], "\n" . implode("\n", $nodes));
     }
 
     /**

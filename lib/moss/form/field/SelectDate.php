@@ -143,7 +143,9 @@ class SelectDate extends Field
         $format = preg_replace('/([^a-z{}<>\/ ])/im', '<li>$1</li>', $format);
         $format = sprintf(
             '<ul %s>%s</ul>',
-            $this->attributes()->toString(),
+            $this
+                ->attributes()
+                ->toString(),
             $format
         );
 

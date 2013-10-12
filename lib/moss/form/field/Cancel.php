@@ -2,7 +2,8 @@
 namespace moss\form\field;
 
 use moss\form\AttributesBag;
-use \moss\form\field\Anchor;
+use moss\form\ErrorsBag;
+use moss\form\Field;
 
 /**
  * Cancel button
@@ -11,18 +12,21 @@ use \moss\form\field\Anchor;
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
  */
-class Cancel extends Anchor {
+class Cancel extends Anchor
+{
 
     /**
      * Constructor
      *
-     * @param string $address url to redirect to
-     * @param string $name name
-     * @param array $attributes additional attributes
+     * @param string $name       name
+     * @param string $address    url to redirect to
+     * @param array  $attributes additional attributes
      */
-    public function __construct($address, $name, $attributes = array()) {
+    public function __construct($name, $address, $attributes = array())
+    {
         $this->name($name);
         $this->value($address);
+        $this->errors = new ErrorsBag();
         $this->attributes = new AttributesBag($attributes);
         $this->attributes->add('class', 'button cancel');
     }

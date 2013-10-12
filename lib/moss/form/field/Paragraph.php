@@ -6,43 +6,28 @@ use moss\form\ErrorsBag;
 use moss\form\Field;
 
 /**
- * Button
+ * Plain text
+ * Allows for text insertion into form structure
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
  */
-class Button extends Field
+class Paragraph extends Field
 {
 
     /**
      * Constructor
      *
-     * @param string $name       field name
-     * @param null   $value      field label
-     * @param array  $attributes additional attributes as associative array
+     * @param string $name
+     * @param string $text
+     * @param array  $attributes
      */
-    public function __construct($name, $value = null, $attributes = array())
+    public function __construct($name, $text = null, $attributes = array())
     {
         $this->name($name);
-        $this->value($value);
+        $this->value($text);
         $this->errors = new ErrorsBag();
         $this->attributes = new AttributesBag($attributes);
-    }
-
-    /**
-     * Sets field name
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function name($name = null)
-    {
-        if ($name !== null) {
-            $this->name = $name;
-        }
-
-        return $this->name;
     }
 
     /**
@@ -56,24 +41,8 @@ class Button extends Field
         return true;
     }
 
-    public function condition($condition, $message)
-    {
-        return $this;
-    }
-
-    /**
-     * Checks if field is valid (if all conditions have been met)
-     *
-     * @return bool
-     */
-    public function isValid()
-    {
-        return true;
-    }
-
     /**
      * Renders label
-     * Button has no label
      *
      * @return null
      */
@@ -90,10 +59,8 @@ class Button extends Field
     public function renderField()
     {
         return sprintf(
-            '<button type="button" name="%1$s" value="%2$s" id="%3$s" %4$s>%1$s</button>',
-            $this->name(),
+            '<p %2$s>%1$s</p>',
             $this->value(),
-            $this->identify(),
             $this
                 ->attributes()
                 ->toString()
@@ -102,7 +69,6 @@ class Button extends Field
 
     /**
      * Renders field errors
-     * Button does not generate errors
      *
      * @return null
      */

@@ -1,7 +1,7 @@
 <?php
 namespace moss\form\field;
 
-use \moss\form\field\Text;
+use moss\form\field\Text;
 
 /**
  * E-mail HTML5 form field
@@ -9,20 +9,24 @@ use \moss\form\field\Text;
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
  */
-class Email extends Text {
+class Mail extends Text
+{
 
     /**
      * Renders field
      *
      * @return string
      */
-    public function renderField() {
+    public function renderField()
+    {
         return sprintf(
             '<input type="email" name="%s" value="%s" id="%s" %s/>',
             $this->name(),
             $this->value(),
             $this->identify(),
-            $this->attributes()->toString(array('required' => $this->required() ? 'required' : null))
+            $this
+                ->attributes()
+                ->toString(array('required' => $this->required() ? 'required' : null))
         );
     }
 }

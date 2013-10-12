@@ -176,41 +176,10 @@ class Checkbox extends Field
         );
 
         $options = $this->options->all();
-        if (empty($options)) {
-            $nodes[] = $this->renderBlank();
-        } else {
-            foreach ($options as $Option) {
-                $nodes[] = $this->renderOption($Option);
-            }
-        }
-
+        $nodes[] = empty($options) ? $this->renderBlank() : $this->renderOptions($options);
         $nodes[] = sprintf('</%s>', $this->tag['group']);
 
         return implode("\n", $nodes);
-    }
-
-    /**
-     * @param array                   $nodes
-     * @param array|OptionInterface[] $options
-     * @param bool                    $blank
-     *
-     * @return array
-     */
-    protected function renderOptions($nodes, $options = array(), $blank = false)
-    {
-        if (empty($options)) {
-            if ($blank) {
-                $nodes[] = $this->renderBlank();
-            }
-
-            return $nodes;
-        }
-
-        foreach ($options as $Option) {
-            $nodes[] = $this->renderOption($Option);
-        }
-
-        return $nodes;
     }
 
     /**
@@ -228,6 +197,28 @@ class Checkbox extends Field
         );
     }
 
+
+    /**
+     * Renders options
+     *
+     * @param array|OptionInterface[] $options
+     *
+     * @return null|string
+     */
+    protected function renderOptions(array $options)
+    {
+        if (empty($options)) {
+            return null;
+        }
+
+        $nodes = array();
+        foreach ($options as $Option) {
+            $nodes[] = $this->renderOption($Option);
+        }
+
+        return implode("\n", $nodes);
+    }
+
     /**
      * Renders single checkbox button
      *
@@ -239,6 +230,19 @@ class Checkbox extends Field
     {
         $id = $this->identify() . '_' . $Option->identify();
 
+        $sub = null;
+        $options = $Option
+            ->options()
+            ->all();
+
+        if (count($options)) {
+            $sub = sprintf(
+                '<%1$s class="options">%2$s</%1$s>',
+                $this->tag['group'],
+                "\n" . $this->renderOptions($options)
+            );
+        }
+
         $field = sprintf(
             '<%1$s class="options"><input type="checkbox" name="%2$s[]" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
             $this->tag['element'],
@@ -248,36 +252,11 @@ class Checkbox extends Field
             $id,
             $Option
                 ->attributes()
-                ->toString(array('checked' => $Option->value() == $this->value() ? 'checked' : null)),
-            $this->renderSubOptions($Option)
+                ->toString(array('checked' => in_array($Option->value(), $this->value) ? 'checked' : null)),
+            $sub
         );
 
         return $field;
-    }
-
-    /**
-     * Renders subn options
-     *
-     * @param OptionInterface $Option
-     *
-     * @return null|string
-     */
-    protected function renderSubOptions(OptionInterface $Option)
-    {
-        $subOptions = $Option
-            ->options()
-            ->all();
-
-        if (empty($subOptions)) {
-            return null;
-        }
-
-        $nodes = array();
-        foreach ($subOptions as $subOption) {
-            $nodes[] = $this->renderOption($subOption);
-        }
-
-        return sprintf('<%1$s class="options">%2$s</%1$s>', $this->tag['group'], "\n" . implode("\n", $nodes));
     }
 
     /**
@@ -286,6 +265,16 @@ class Checkbox extends Field
      * @return string
      */
     public function render()
+    {
+        return $this->renderLabel() . $this->renderError() . $this->renderField();
+    }
+
+    /**
+     * Returns prototype string (for javascript templates)
+     *
+     * @return string
+     */
+    public function prototype()
     {
         return $this->renderLabel() . $this->renderError() . $this->renderField();
     }

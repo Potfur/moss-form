@@ -2,6 +2,7 @@
 namespace moss\form;
 
 use moss\form\FieldInterface;
+use moss\form\ConditionException;
 
 /**
  * Abstract form field prototype
@@ -11,7 +12,6 @@ use moss\form\FieldInterface;
  */
 abstract class Field implements FieldInterface
 {
-
     /** @var \moss\form\AttributesBag */
     protected $attributes;
 
@@ -154,8 +154,14 @@ abstract class Field implements FieldInterface
             throw new ConditionException('Invalid condition for field "' . $this->name . '". Allowed condition types: regexp string, array of permitted values or closure');
         }
 
-        if($this->errors()->count()) {
-            $this->attributes()->add('class', 'error');
+        $count = $this
+            ->errors()
+            ->count();
+
+        if ($count) {
+            $this
+                ->attributes()
+                ->add('class', 'error');
         }
 
         return $this;
@@ -186,11 +192,13 @@ abstract class Field implements FieldInterface
      */
     public function isValid()
     {
-        if(!$this->errors()) {
+        if (!$this->errors()) {
             return true;
         }
 
-        return $this->errors()->count() === 0;
+        return $this
+            ->errors()
+            ->count() === 0;
     }
 
     /**
@@ -250,6 +258,17 @@ abstract class Field implements FieldInterface
     {
         return $this->renderLabel() . $this->renderField() . $this->renderError();
     }
+
+    /**
+     * Returns prototype string (for javascript templates)
+     *
+     * @return string
+     */
+    public function prototype()
+    {
+        return $this->renderLabel() . $this->renderField('${' . $this->name . '}') . $this->renderError();
+    }
+
 
     /**
      * Casts element to string

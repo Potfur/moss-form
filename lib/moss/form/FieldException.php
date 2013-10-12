@@ -1,6 +1,7 @@
 <?php
 namespace moss\form;
 
-class FieldException extends ElementException {
+class FieldException extends ElementException
+{
 
 }
