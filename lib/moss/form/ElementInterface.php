@@ -49,14 +49,6 @@ interface ElementInterface
      */
     public function render();
 
-// TODO - prototype
-//    /**
-//     * Returns prototype string (for javascript templates)
-//     *
-//     * @return string
-//     */
-//    public function prototype();
-
     /**
      * Casts element to string
      *

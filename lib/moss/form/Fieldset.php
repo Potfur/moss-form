@@ -20,9 +20,6 @@ class Fieldset implements FieldsetInterface
     /** @var \moss\form\AttributesBag */
     protected $attributes;
 
-    /** @var \moss\form\ErrorsBag */
-    protected $errors;
-
     protected $identifier;
 
     protected $label;
@@ -45,9 +42,10 @@ class Fieldset implements FieldsetInterface
     public function __construct($label = null, $fields = array(), $attributes = array())
     {
         $this->label($label);
-        $this->setFields($fields);
+        foreach($fields as $key => $field) {
+            $this->set($key, $field);
+        }
         $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
     }
 
     /**
@@ -77,28 +75,11 @@ class Fieldset implements FieldsetInterface
     }
 
     /**
-     * Sets fieldset fields
-     * Fields must be passed as array key - value pairs, where key is field/fieldsets identifier
-     *
-     * @param array $fields array containing fields
-     *
-     * @return $this
-     */
-    public function setFields(array $fields)
-    {
-        foreach ($fields as $id => $field) {
-            $this->setField($id, $field);
-        }
-
-        return $this;
-    }
-
-    /**
      * Returns all element attributes as array
      *
      * @return array|ElementInterface[]
      */
-    public function getFields()
+    public function all()
     {
         return $this->struct;
     }
@@ -112,7 +93,7 @@ class Fieldset implements FieldsetInterface
      *
      * @return $this
      */
-    public function setField($identifier, ElementInterface $Element)
+    public function set($identifier, ElementInterface $Element)
     {
         $this->struct[$identifier] = $Element;
 
@@ -127,7 +108,7 @@ class Fieldset implements FieldsetInterface
      * @return mixed|ElementInterface
      * @throws FieldException
      */
-    public function getField($identifier)
+    public function get($identifier)
     {
         if (!isset($this->struct[$identifier])) {
             throw new FieldException(sprintf('Invalid identifier or field "%s" does not exists in fieldset', $identifier));
@@ -143,7 +124,7 @@ class Fieldset implements FieldsetInterface
      *
      * @return FieldsetInterface
      */
-    public function removeField($identifier)
+    public function remove($identifier)
     {
         if (isset($this->struct[$identifier])) {
             unset($this->struct[$identifier]);
@@ -151,6 +132,23 @@ class Fieldset implements FieldsetInterface
 
         return $this;
     }
+
+    /**
+     * Returns rendered and escaped fieldset
+     *
+     * @param bool $revertBraces
+     *
+     * @return string
+     */
+    public function prototype($revertBraces = true)
+    {
+        $str = $this->render();
+        $str = htmlspecialchars($str);
+        $str = str_replace(array("\r", "\n"), null, $str);
+        $str = preg_replace_callback('/(\{[^}]+\})/im', array($this, 'revertEscaped'), $str);
+        return $str;
+    }
+
 
     /**
      * Returns field identifier
@@ -205,7 +203,22 @@ class Fieldset implements FieldsetInterface
      */
     public function errors()
     {
-        return $this->errors;
+        $errors = new ErrorsBag();
+        foreach($this->struct as $element) {
+            if($element instanceof FieldsetInterface || $element instanceof FieldInterface) {
+                continue;
+            }
+
+            if(!$element->errors()->count()) {
+                continue;
+            }
+
+            foreach($element->errors()->all() as $error) {
+                $errors->set($error);
+            }
+        }
+
+        return $errors;
     }
 
     /**

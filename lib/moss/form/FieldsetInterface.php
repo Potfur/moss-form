@@ -29,21 +29,11 @@ interface FieldsetInterface extends ElementInterface, \ArrayAccess, \Iterator
     public function attributes();
 
     /**
-     * Sets fieldset fields
-     * Fields must be passed as array key - value pairs, where key is field/fieldsets identifier
-     *
-     * @param array $fields array containing fields
-     *
-     * @return $this
-     */
-    public function setFields(array $fields);
-
-    /**
      * Returns all element attributes as array
      *
      * @return array
      */
-    public function getFields();
+    public function all();
 
     /**
      * Adds element to fieldset
@@ -53,7 +43,7 @@ interface FieldsetInterface extends ElementInterface, \ArrayAccess, \Iterator
      *
      * @return FieldsetInterface
      */
-    public function setField($identifier, ElementInterface $Element);
+    public function set($identifier, ElementInterface $Element);
 
     /**
      * Returns element from fieldset
@@ -62,7 +52,7 @@ interface FieldsetInterface extends ElementInterface, \ArrayAccess, \Iterator
      *
      * @return ElementInterface
      */
-    public function getField($identifier);
+    public function get($identifier);
 
     /**
      * Removes element from fieldset
@@ -71,5 +61,14 @@ interface FieldsetInterface extends ElementInterface, \ArrayAccess, \Iterator
      *
      * @return FieldsetInterface
      */
-    public function removeField($identifier);
+    public function remove($identifier);
+
+    /**
+     * Returns rendered and escaped fieldset
+     *
+     * @param bool $revertBraces
+     *
+     * @return string
+     */
+    public function prototype($revertBraces = true);
 }

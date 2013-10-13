@@ -11,6 +11,7 @@ class AttributesBag implements BagInterface
 {
 
     private $reserved = array('id', 'type', 'name', 'value', 'checked', 'selected', 'required');
+    private $arrays = array('class');
     private $attributes = array();
 
     /**
@@ -55,7 +56,10 @@ class AttributesBag implements BagInterface
             return null;
         }
 
-        return $this->joinAttributeValue($this->attributes[$name]);
+        if (in_array($name, $this->arrays)) {
+            return $this->joinAttributeValue($this->attributes[$name]);
+        }
+        return $this->attributes[$name];
     }
 
     /**
@@ -78,8 +82,13 @@ class AttributesBag implements BagInterface
             throw new AttributeException(sprintf('Attribute name "%s" is not valid or is reserved in field "%s"', $name, get_class($this)));
         }
 
-        $this->attributes[$name] = $this->splitAttributeValue($value);
+        if (in_array($name, $this->arrays)) {
+            $this->attributes[$name] = $this->splitAttributeValue($value);
 
+            return $this;
+        }
+
+        $this->attributes[$name] = $value;
         return $this;
     }
 
@@ -103,17 +112,22 @@ class AttributesBag implements BagInterface
             throw new AttributeException(sprintf('Attribute name "%s" is not valid or is reserved in field "%s"', $name, get_class($this)));
         }
 
-        if (!isset($this->attributes[$name])) {
-            $this->attributes[$name] = array();
+        if (in_array($name, $this->arrays)) {
+            if (!isset($this->attributes[$name])) {
+                $this->attributes[$name] = array();
+            }
+
+            if (!is_array($value)) {
+                $value = $this->splitAttributeValue($value);
+            }
+
+            $this->attributes[$name] = array_merge($this->attributes[$name], $value);
+            $this->attributes[$name] = array_unique($this->attributes[$name]);
+
+            return $this;
         }
 
-        if (!is_array($value)) {
-            $value = $this->splitAttributeValue($value);
-        }
-
-        $this->attributes[$name] = array_merge($this->attributes[$name], $value);
-        $this->attributes[$name] = array_unique($this->attributes[$name]);
-
+        $this->attributes[$name] = $value;
         return $this;
     }
 
@@ -140,18 +154,17 @@ class AttributesBag implements BagInterface
             throw new AttributeException(sprintf('Attribute name "%s" is not valid or is reserved in field "%s"', $name, get_class($this)));
         }
 
-        if ($value === null) {
-            if (isset($this->attributes[$name])) {
-                unset($this->attributes[$name]);
-            }
-
+        if (!isset($this->attributes[$name])) {
             return $this;
         }
 
-        if (isset($this->attributes[$name])) {
+        if (in_array($name, $this->arrays) && $value !== null) {
             $value = array_diff($this->attributes[$name], (array) $value);
             $this->attributes[$name] = $value;
+            return $this;
         }
+
+        unset($this->attributes[$name]);
 
         return $this;
     }
@@ -165,7 +178,7 @@ class AttributesBag implements BagInterface
     {
         $result = array();
         foreach ($this->attributes as $name => $values) {
-            $result[$name] = $this->joinAttributeValue($this->attributes[$name]);
+            $result[$name] = in_array($name, $this->arrays) ? $this->joinAttributeValue($this->attributes[$name]) : $this->attributes[$name];
         }
 
         return $result;

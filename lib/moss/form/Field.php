@@ -260,17 +260,6 @@ abstract class Field implements FieldInterface
     }
 
     /**
-     * Returns prototype string (for javascript templates)
-     *
-     * @return string
-     */
-    public function prototype()
-    {
-        return $this->renderLabel() . $this->renderField('${' . $this->name . '}') . $this->renderError();
-    }
-
-
-    /**
      * Casts element to string
      *
      * @return mixed|string
