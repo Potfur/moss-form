@@ -3,12 +3,12 @@ namespace moss\form\field;
 
 use moss\form\AbstractFieldTest;
 
-class ButtonTest extends AbstractFieldTest
+class SubmitTest extends AbstractFieldTest
 {
 
     public function setUp()
     {
-        $this->field = new Button('name', 'value', array('class' => 'foo'));
+        $this->field = new Submit('name', 'value', 'label', array('class' => 'foo'));
     }
 
     public function tearDown()
@@ -46,7 +46,7 @@ class ButtonTest extends AbstractFieldTest
 
     public function testRenderField()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">name</button>', $this->field->renderField());
+        $this->assertEquals('<button type="submit" name="name" value="value" id="name" class="foo">label</button>', $this->field->renderField());
     }
 
     public function testRenderError()
@@ -56,11 +56,11 @@ class ButtonTest extends AbstractFieldTest
 
     public function testRender()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">name</button>', $this->field->render());
+        $this->assertEquals('<button type="submit" name="name" value="value" id="name" class="foo">label</button>', $this->field->render());
     }
 
     public function testToString()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">name</button>', $this->field->__toString());
+        $this->assertEquals('<button type="submit" name="name" value="value" id="name" class="foo">label</button>', $this->field->__toString());
     }
 }

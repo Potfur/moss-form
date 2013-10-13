@@ -118,7 +118,7 @@ class Radio extends Field
     protected function renderBlank()
     {
         return sprintf(
-            '<%1$s><input type="radio" name="%2$s[]" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
+            '<%1$s><input type="radio" name="%2$s" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
             $this->tag['element'],
             $this->name(),
             $this->identify() . '_empty'
