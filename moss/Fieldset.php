@@ -256,11 +256,13 @@ class Fieldset implements FieldsetInterface
             $nodes[] = (string) $field;
         }
 
+        $id = $this->identify() ? 'id="' . $this->identify() . '"' : null;
+
         $attr = $this
             ->attributes()
             ->toString();
 
-        $nodes[] = sprintf('<%s %s>', $this->tag['group'], $attr);
+        $nodes[] = sprintf('<%s %s %s>', $this->tag['group'], $id, $attr);
 
         if ($this->label) {
             $nodes[] = sprintf('<legend>%s</legend>', $this->label());

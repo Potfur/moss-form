@@ -172,7 +172,7 @@ class Radio extends Field
         }
 
         $field = sprintf(
-            '<%1$s class="options"><input type="radio" name="%2$s[]" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
+            '<%1$s class="options"><input type="radio" name="%2$s" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
             $this->tag['element'],
             $this->name(),
             $Option->label(),

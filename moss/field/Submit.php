@@ -20,10 +20,11 @@ class Submit extends Button
     public function renderField()
     {
         return sprintf(
-            '<button type="submit" name="%1$s" value="%2$s" id="%3$s" %4$s>%1$s</button>',
+            '<button type="submit" name="%1$s" value="%2$s" id="%3$s" %5$s>%4$s</button>',
             $this->name(),
             $this->value(),
             $this->identify(),
+            $this->label(),
             $this
                 ->attributes()
                 ->toString()

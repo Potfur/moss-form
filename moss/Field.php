@@ -277,7 +277,7 @@ abstract class Field implements FieldInterface
      *
      * @return string
      */
-    private function strip($string, $identifier = false)
+    protected function strip($string, $identifier = false)
     {
         $string = (string) $string;
         $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);

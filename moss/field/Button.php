@@ -18,13 +18,15 @@ class Button extends Field
      * Constructor
      *
      * @param string $name       field name
-     * @param null   $value      field label
+     * @param string   $value      field value
+     * @param string   $label      field label
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $value = null, $attributes = array())
+    public function __construct($name, $value = null, $label = null, $attributes = array())
     {
         $this->name($name);
         $this->value($value);
+        $this->label($label);
         $this->errors = new ErrorsBag();
         $this->attributes = new AttributesBag($attributes);
     }
@@ -90,10 +92,11 @@ class Button extends Field
     public function renderField()
     {
         return sprintf(
-            '<button type="button" name="%1$s" value="%2$s" id="%3$s" %4$s>%1$s</button>',
+            '<button type="button" name="%1$s" value="%2$s" id="%3$s" %5$s>%4$s</button>',
             $this->name(),
             $this->value(),
             $this->identify(),
+            $this->label(),
             $this
                 ->attributes()
                 ->toString()
