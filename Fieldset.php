@@ -42,7 +42,7 @@ class Fieldset implements FieldsetInterface
     public function __construct($label = null, $fields = array(), $attributes = array())
     {
         $this->label($label);
-        foreach($fields as $key => $field) {
+        foreach ($fields as $key => $field) {
             $this->set($key, $field);
         }
         $this->attributes = new AttributesBag($attributes);
@@ -145,10 +145,23 @@ class Fieldset implements FieldsetInterface
         $str = $this->render();
         $str = htmlspecialchars($str);
         $str = str_replace(array("\r", "\n"), null, $str);
-        $str = preg_replace_callback('/(\{[^}]+\})/im', array($this, 'revertEscaped'), $str);
+        if ($revertBraces) {
+            $str = preg_replace_callback('/(\{[^}]+\})/im', array($this, 'revertEscaped'), $str);
+        }
         return $str;
     }
 
+    /**
+     * Reverts escaped chars in braces
+     *
+     * @param array $matches
+     *
+     * @return string
+     */
+    protected function revertEscaped($matches)
+    {
+        return htmlspecialchars_decode($matches[0]);
+    }
 
     /**
      * Returns field identifier
@@ -204,16 +217,21 @@ class Fieldset implements FieldsetInterface
     public function errors()
     {
         $errors = new ErrorsBag();
-        foreach($this->struct as $element) {
-            if($element instanceof FieldsetInterface || $element instanceof FieldInterface) {
+        foreach ($this->struct as $element) {
+            if ($element instanceof FieldsetInterface || $element instanceof FieldInterface) {
                 continue;
             }
 
-            if(!$element->errors()->count()) {
+            if (!$element
+                ->errors()
+                ->count()
+            ) {
                 continue;
             }
 
-            foreach($element->errors()->all() as $error) {
+            foreach ($element
+                ->errors()
+                ->all() as $error) {
                 $errors->set($error);
             }
         }
@@ -231,7 +249,7 @@ class Fieldset implements FieldsetInterface
         $nodes = array();
 
         foreach ($this->struct as $field) {
-            if($field->isVisible() === true) {
+            if ($field->isVisible() === true) {
                 continue;
             }
 
@@ -244,12 +262,12 @@ class Fieldset implements FieldsetInterface
 
         $nodes[] = sprintf('<%s %s>', $this->tag['group'], $attr);
 
-        if($this->label) {
+        if ($this->label) {
             $nodes[] = sprintf('<legend>%s</legend>', $this->label());
         }
 
         foreach ($this->struct as $field) {
-            if($field->isVisible() === false) {
+            if ($field->isVisible() === false) {
                 continue;
             }
 
