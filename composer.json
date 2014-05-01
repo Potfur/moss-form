@@ -1,0 +1,25 @@
+{
+	"name": "moss/form",
+	"version": "0.1.0",
+	"description": "moss form",
+	"keywords": ["forms"],
+	"type": "forms",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Michal Wachowski",
+			"email": "wachowski.michal@gmail.com"
+		}
+	],
+	"require": {
+		"php": ">=5.3.4"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "3.7.*"
+	},
+	"autoload": {
+		"psr-0": {
+			"Moss\\Form\\": ""
+		}
+	}
+}
