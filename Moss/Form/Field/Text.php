@@ -1,8 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -19,18 +19,23 @@ class Text extends Field
      *
      * @param string $name       field name
      * @param null   $value      field value
-     * @param null   $label      field label
-     * @param bool   $required   if true "required" tag will be inserted into label
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $value = null, $label = null, $required = false, $attributes = array())
+    public function __construct($name, $value = null, array $attributes = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+
         $this->name($name);
         $this->value($value);
-        $this->label($label, $required);
-        $this->required($required);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
@@ -54,13 +59,13 @@ class Text extends Field
     public function renderField($value = null)
     {
         return sprintf(
-            '<input type="text" name="%s" value="%s" id="%s" %s/>',
-            $this->name(),
-            $value === null ? $this->value() : $value,
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null))
+            '<input %s/>',
+            $this->attributes->render(
+                array(
+                    'type' => 'text',
+                    'label' => null,
+                )
+            )
         );
     }
 }
