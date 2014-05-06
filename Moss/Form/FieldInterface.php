@@ -56,11 +56,10 @@ interface FieldInterface extends ElementInterface
      *
      * @param string|array|callable $condition condition witch will be used
      * @param string                $message   error message if condition is not met
-     * @param bool                  $force     if true, condition is checked even if not required and empty
      *
      * @return FieldInterface
      */
-    public function condition($condition, $message, $force = false);
+    public function condition($condition, $message);
 
     /**
      * Returns attribute bag interface

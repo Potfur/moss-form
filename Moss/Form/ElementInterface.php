@@ -38,7 +38,7 @@ interface ElementInterface
     /**
      * Returns all error messages
      *
-     * @return ErrorsBag
+     * @return \Moss\Form\ErrorBag
      */
     public function errors();
 

@@ -1,11 +1,6 @@
 <?php
 namespace Moss\Form;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\FieldException;
-use Moss\Form\FieldsetInterface;
-use Moss\Form\ElementInterface;
-
 /**
  * Object oriented fieldset representation
  * Fieldset is represented as unordered lists
@@ -17,13 +12,9 @@ use Moss\Form\ElementInterface;
 class Fieldset implements FieldsetInterface
 {
 
-    /** @var \Moss\Form\AttributesBag */
+    /** @var \Moss\Form\AttributeBag */
     protected $attributes;
 
-    protected $identifier;
-
-    protected $label;
-    protected $valid;
     protected $tag = array(
         'group' => 'ul',
         'element' => 'li'
@@ -41,121 +32,13 @@ class Fieldset implements FieldsetInterface
      */
     public function __construct($label = null, $fields = array(), $attributes = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+
         $this->label($label);
+
         foreach ($fields as $key => $field) {
             $this->set($key, $field);
         }
-        $this->attributes = new AttributesBag($attributes);
-    }
-
-    /**
-     * Sets field label
-     *
-     * @param string $label field label
-     *
-     * @return string
-     */
-    public function label($label = null)
-    {
-        if ($label !== null) {
-            $this->label = $label;
-        }
-
-        return $this->label;
-    }
-
-    /**
-     * Returns attribute bag interface
-     *
-     * @return AttributesBag
-     */
-    public function attributes()
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * Returns all element attributes as array
-     *
-     * @return array|ElementInterface[]
-     */
-    public function all()
-    {
-        return $this->struct;
-    }
-
-
-    /**
-     * Adds element to fieldset
-     *
-     * @param string           $identifier
-     * @param ElementInterface $Element
-     *
-     * @return $this
-     */
-    public function set($identifier, ElementInterface $Element)
-    {
-        $this->struct[$identifier] = $Element;
-
-        return $this;
-    }
-
-    /**
-     * Returns element from fieldset
-     *
-     * @param string $identifier
-     *
-     * @return mixed|ElementInterface|FieldInterface|FieldsetInterface
-     * @throws FieldException
-     */
-    public function get($identifier)
-    {
-        if (!isset($this->struct[$identifier])) {
-            throw new FieldException(sprintf('Invalid identifier or field "%s" does not exists in fieldset', $identifier));
-        }
-
-        return $this->struct[$identifier];
-    }
-
-    /**
-     * Removes element from fieldset
-     *
-     * @param string $identifier
-     *
-     * @return FieldsetInterface
-     */
-    public function remove($identifier)
-    {
-        if (isset($this->struct[$identifier])) {
-            unset($this->struct[$identifier]);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Returns rendered and escaped fieldset
-     *
-     * @return string
-     */
-    public function prototype()
-    {
-        $str = $this->render();
-        $str = htmlspecialchars($str);
-        $str = str_replace(array("\r", "\n"), null, $str);
-        return $str;
-    }
-
-    /**
-     * Reverts escaped chars in braces
-     *
-     * @param array $matches
-     *
-     * @return string
-     */
-    protected function revertEscaped($matches)
-    {
-        return htmlspecialchars_decode($matches[0]);
     }
 
     /**
@@ -169,12 +52,66 @@ class Fieldset implements FieldsetInterface
     public function identify($identifier = null)
     {
         if ($identifier) {
-            $this->identifier = $this->strip($identifier, true);
-        } elseif (!$this->identifier) {
-            $this->identifier = $this->strip($this->label, true);
+            $this->attributes->set('id', $identifier);
+        } elseif (!$this->attributes->has('id')) {
+            $this->attributes->set('id', $this->attributes->get('name'));
         }
 
-        return $this->identifier;
+        return $this->attributes->get('id');
+    }
+
+    /**
+     * Sets field label
+     *
+     * @param string $label field label
+     *
+     * @return string
+     */
+    public function label($label = null)
+    {
+        if ($label !== null) {
+            $this->attributes->set('label', $label);
+        }
+
+        return $this->attributes->get('label');
+    }
+
+    /**
+     * Returns attribute bag interface
+     *
+     * @return \Moss\Form\AttributeBag
+     */
+    public function attributes()
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * Returns all error messages
+     *
+     * @return \Moss\Form\ErrorBag
+     */
+    public function errors()
+    {
+        $errors = new ErrorBag();
+        foreach ($this->struct as $element) {
+            if ($element instanceof FieldsetInterface || $element instanceof FieldInterface) {
+                continue;
+            }
+
+            if (!$element->errors()
+                ->has()
+            ) {
+                continue;
+            }
+
+            foreach ($element->errors()
+                ->all() as $error) {
+                $errors->add(null, $error);
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -205,109 +142,164 @@ class Fieldset implements FieldsetInterface
     }
 
     /**
-     * Returns all error messages
-     *
-     * @return ErrorsBag
-     */
-    public function errors()
-    {
-        $errors = new ErrorsBag();
-        foreach ($this->struct as $element) {
-            if ($element instanceof FieldsetInterface || $element instanceof FieldInterface) {
-                continue;
-            }
-
-            if (!$element
-                ->errors()
-                ->count()
-            ) {
-                continue;
-            }
-
-            foreach ($element
-                ->errors()
-                ->all() as $error) {
-                $errors->set($error);
-            }
-        }
-
-        return $errors;
-    }
-
-    /**
-     * Renders element
+     * Returns rendered and escaped fieldset
      *
      * @return string
      */
-    public function render()
+    public function prototype()
     {
-        $nodes = array();
+        $str = $this->render();
+        $str = htmlspecialchars($str);
+        $str = str_replace(array("\r", "\n"), null, $str);
 
-        foreach ($this->struct as $field) {
-            if ($field->isVisible() === true) {
-                continue;
-            }
-
-            $nodes[] = (string) $field;
-        }
-
-        $id = $this->identify() ? 'id="' . $this->identify() . '"' : null;
-
-        $attr = $this
-            ->attributes()
-            ->toString();
-
-        $nodes[] = sprintf('<%s %s %s>', $this->tag['group'], $id, $attr);
-
-        if ($this->label) {
-            $nodes[] = sprintf('<legend>%s</legend>', $this->label());
-        }
-
-        foreach ($this->struct as $field) {
-            if ($field->isVisible() === false) {
-                continue;
-            }
-
-            $nodes[] = sprintf('<%1$s>%2$s</%1s>', $this->tag['element'], (string) $field);
-        }
-
-        $nodes[] = sprintf('</%s>', $this->tag['group']);
-
-        return implode("\n", $nodes);
-    }
-
-    /**
-     * Casts element to string
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        try {
-            return $this->render();
-        } catch(\Exception $e) {
-            return $e->getMessage();
-        }
-    }
-
-    /**
-     * Checks if offset exists
-     *
-     * @param int|string $offset offset to check
-     *
-     * @return bool
-     */
-    public function offsetExists($offset)
-    {
-        return isset($this->struct[$offset]);
+        return $str;
     }
 
     /**
      * Retrieves offset value
      *
-     * @param int|string $offset offset to retrieve
+     * @param string $offset
+     * @param mixed  $default
      *
-     * @return ElementInterface
+     * @return mixed
+     */
+    public function get($offset = null, $default = null)
+    {
+        if ($offset === null) {
+            return $this->all();
+        }
+
+        return isset($this->struct[$offset]) ? $this->struct[$offset] : $default;
+    }
+
+    /**
+     * Sets value to offset
+     *
+     * @param string $offset
+     * @param mixed  $value
+     *
+     * @return $this
+     */
+    public function set($offset, $value)
+    {
+        if ($offset === null) {
+            array_push($this->struct, $value);
+
+            return $this;
+        }
+
+        $this->struct[$offset] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Returns true if offset exists in bag
+     *
+     * @param string $offset
+     *
+     * @return bool
+     */
+    public function has($offset = null)
+    {
+        if ($offset !== null) {
+            return isset($this->struct[$offset]);
+        }
+
+        return $this->count() > 0;
+    }
+
+    /**
+     * Adds value or values to offset
+     * Creates offset if it does not exists
+     *
+     * @param string       $offset offset to add to
+     * @param string|array $value  value or array of values added
+     *
+     * @return $this
+     */
+    public function add($offset, $value)
+    {
+        if ($offset === null) {
+            $offset = count($offset);
+        }
+
+        $this->struct[$offset][] = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Removes offset from bag
+     * If no offset set, removes all values
+     *
+     * @param string $offset offset to remove from
+     *
+     * @return $this
+     */
+    public function remove($offset = null)
+    {
+        if ($offset == null) {
+            $this->struct = array();
+        }
+
+        if (!isset($this->struct[$offset])) {
+            return $this;
+        }
+
+        unset($this->struct[$offset]);
+
+        return $this;
+    }
+
+    /**
+     * Returns all options
+     * If array passed, becomes bag content
+     *
+     * @param array $array overwrites values
+     *
+     * @return array
+     */
+    public function all($array = array())
+    {
+        if ($array !== array()) {
+            $this->struct = $array;
+        }
+
+        return $this->struct;
+    }
+
+    /**
+     * Removes all options
+     *
+     * @return $this
+     */
+    public function reset()
+    {
+        $this->struct = array();
+
+        return $this;
+    }
+
+    /**
+     * Whether a offset exists
+     *
+     * @param mixed $offset
+     *
+     * @return boolean true on success or false on failure.
+     */
+    public function offsetExists($offset)
+    {
+        return $this->has($offset);
+    }
+
+    /**
+     * Offset to retrieve
+     *
+     * @param mixed $offset
+     *
+     * @return mixed Can return all value types.
      */
     public function &offsetGet($offset)
     {
@@ -319,85 +311,28 @@ class Fieldset implements FieldsetInterface
     }
 
     /**
-     * Sets value for offset
+     * Offset to set
      *
-     * @param int|string $offset offset to set
-     * @param mixed      $value  offsets value
+     * @param mixed $offset
+     * @param mixed $value
+     *
+     * @return void
      */
     public function offsetSet($offset, $value)
     {
-        if ($offset === null) {
-            $offset = count($this->struct);
-        }
-
-        $this->struct[$offset] = $value;
+        $this->set($offset, $value);
     }
 
     /**
-     * Unsets offset
+     * Offset to unset
      *
-     * @param int|string $offset offset to unset
+     * @param mixed $offset
+     *
+     * @return void
      */
     public function offsetUnset($offset)
     {
-        unset($this->struct[$offset]);
-    }
-
-    /**
-     * Return the current element
-     *
-     * @return ElementInterface
-     */
-    public function current()
-    {
-        return current($this->struct);
-    }
-
-    /**
-     * Move forward to next element
-     */
-    public function next()
-    {
-        next($this->struct);
-    }
-
-    /**
-     * Return the key of the current element
-     *
-     * @return mixed
-     */
-    public function key()
-    {
-        return key($this->struct);
-    }
-
-    /**
-     * Checks if current position is valid
-     *
-     * @return boolean
-     */
-    public function valid()
-    {
-        $key = key($this->struct);
-
-        while ($key !== null) {
-            $this->next();
-            $key = key($this->struct);
-        }
-
-        if ($key === false || $key === null) {
-            return false;
-        }
-
-        return isset($this->struct[$key]);
-    }
-
-    /**
-     * Rewind the Iterator to the first element
-     */
-    public function rewind()
-    {
-        reset($this->struct);
+        $this->remove($offset);
     }
 
     /**
@@ -411,24 +346,133 @@ class Fieldset implements FieldsetInterface
     }
 
     /**
-     * Strips string from invalid characters
+     * Return the current element
      *
-     * @param string $string    string to strip
-     * @param bool   $lowercase if set to true, will return lowercase string
+     * @return mixed
+     */
+    public function current()
+    {
+        return current($this->struct);
+    }
+
+    /**
+     * Return the key of the current element
+     *
+     * @return mixed
+     */
+    public function key()
+    {
+        return key($this->struct);
+    }
+
+    /**
+     * Move forward to next element
+     *
+     * @return void
+     */
+    public function next()
+    {
+        next($this->struct);
+    }
+
+    /**
+     * Rewind the Iterator to the first element
+     *
+     * @return void
+     */
+    public function rewind()
+    {
+        reset($this->struct);
+    }
+
+    /**
+     * Checks if current position is valid
+     *
+     * @return bool
+     */
+    public function valid()
+    {
+        $key = key($this->struct);
+
+        if ($key === false || $key === null) {
+            return false;
+        }
+
+        return isset($this->struct[$key]);
+    }
+
+    /**
+     * Renders element
      *
      * @return string
      */
-    private function strip($string, $lowercase = false)
+    public function render()
     {
-        $string = (string) $string;
-        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
-        $string = preg_replace('#[^a-z0-9_\-\[\]]+#i', '_', $string);
-        $string = trim($string, '_');
+        $nodes = array();
 
-        if ($lowercase) {
-            $string = strtolower($string);
+        $this->renderLabel($nodes);
+        $this->renderHiddenFields($nodes);
+        $this->renderVisibleFields($nodes);
+
+        return implode("\n", $nodes);
+    }
+
+    /**
+     * Renders label if set
+     *
+     * @param array $nodes
+     */
+    protected function renderLabel(&$nodes)
+    {
+        if ($this->attributes->get('label')) {
+            $nodes[] = sprintf('<legend>%s</legend>', $this->attributes->get('label'));
+        }
+    }
+
+    /**
+     * Renders hidden fields
+     *
+     * @param array $nodes
+     */
+    protected function renderHiddenFields(&$nodes)
+    {
+        foreach ($this->struct as $field) {
+            if ($field->isVisible() === true) {
+                continue;
+            }
+
+            $nodes[] = (string) $field;
+        }
+    }
+
+    /**
+     * Renders visible fields with structure
+     *
+     * @param array $nodes
+     * @param array $attributes
+     */
+    protected function renderVisibleFields(&$nodes, array $attributes = array())
+    {
+        $nodes[] = sprintf('<%s %s>', $this->tag['group'], $this->attributes->render($attributes));
+
+        foreach ($this->struct as $field) {
+            if ($field->isVisible() === false) {
+                continue;
+            }
+
+            $nodes[] = sprintf('<%1$s>%2$s</%1s>', $this->tag['element'], (string) $field);
         }
 
-        return $string;
+        $nodes[] = sprintf('</%s>', $this->tag['group']);
+    }
+
+    /**
+     * Returns error messages as string
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->render();
     }
 }

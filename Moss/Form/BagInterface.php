@@ -1,52 +1,82 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form;
 
-
-interface BagInterface
+/**
+ * Parameter bag interface
+ *
+ * @package  Moss Form
+ * @author   Michal Wachowski <wachowski.michal@gmail.com>
+ */
+interface BagInterface extends \ArrayAccess, \Iterator, \Countable
 {
-
     /**
-     * Counts all elements in bag
+     * Retrieves offset value
      *
-     * @return int
-     */
-    public function count();
-
-    /**
-     * Retrieves elements attribute value
-     *
-     * @param string $name attribute name
+     * @param string $offset
      *
      * @return mixed
      */
-    public function get($name = null);
+    public function get($offset = null);
 
     /**
-     * Sets elements attribute
-     * If attribute exists - overwrites it
+     * Sets value to offset
      *
-     * @param string $name attribute name
+     * @param string $offset
+     * @param mixed  $value
      *
      * @return $this
      */
-    public function set($name);
+    public function set($offset, $value);
 
     /**
-     * Remove value or values from elements attribute
-     * If no value passed, removes entire attribute
+     * Returns true if offset exists in bag
      *
-     * @param string $name attribute to remove from
+     * @param string $offset
+     *
+     * @return bool
+     */
+    public function has($offset = null);
+
+    /**
+     * Adds value or values to offset
+     * Creates offset if it does not exists
+     *
+     * @param string       $offset offset to add to
+     * @param string|array $value  value or array of values added
      *
      * @return $this
      */
-    public function remove($name = null);
+    public function add($offset, $value);
+
+    /**
+     * Removes offset from bag
+     * If no offset set, removes all values
+     *
+     * @param string $offset offset to remove from
+     *
+     * @return $this
+     */
+    public function remove($offset = null);
 
     /**
      * Returns all options
+     * If array passed, becomes bag content
+     *
+     * @param array $array overwrites values
      *
      * @return array
      */
-    public function all();
+    public function all($array = array());
 
     /**
      * Removes all options
@@ -56,11 +86,9 @@ interface BagInterface
     public function reset();
 
     /**
-     * Returns all not empty attributes as string
-     *
-     * @param array $additional
+     * Returns attributes as string
      *
      * @return string
      */
-    public function toString($additional = array());
+    function __toString();
 }

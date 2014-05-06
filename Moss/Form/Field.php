@@ -1,9 +1,6 @@
 <?php
 namespace Moss\Form;
 
-use Moss\Form\FieldInterface;
-use Moss\Form\ConditionException;
-
 /**
  * Abstract form field prototype
  *
@@ -12,19 +9,15 @@ use Moss\Form\ConditionException;
  */
 abstract class Field implements FieldInterface
 {
-    /** @var \Moss\Form\AttributesBag */
+    /**
+     * @var \Moss\Form\AttributeBag
+     */
     protected $attributes;
 
-    /** @var \Moss\Form\ErrorsBag */
+    /**
+     * @var \Moss\Form\ErrorBag
+     */
     protected $errors;
-
-    protected $identifier;
-
-    protected $label;
-    protected $required;
-
-    protected $name;
-    protected $value;
 
     /**
      * Returns field identifier
@@ -37,12 +30,12 @@ abstract class Field implements FieldInterface
     public function identify($identifier = null)
     {
         if ($identifier) {
-            $this->identifier = $this->strip($identifier, true);
-        } elseif (!$this->identifier) {
-            $this->identifier = $this->strip($this->name, true);
+            $this->attributes->set('id', $identifier);
+        } elseif (!$this->attributes->has('id')) {
+            $this->attributes->set('id', $this->attributes->get('name'));
         }
 
-        return $this->identifier;
+        return $this->attributes->get('id');
     }
 
     /**
@@ -55,10 +48,10 @@ abstract class Field implements FieldInterface
     public function label($label = null)
     {
         if ($label !== null) {
-            $this->label = $label;
+            $this->attributes->set('label', $label);
         }
 
-        return $this->label;
+        return $this->attributes->get('label');
     }
 
     /**
@@ -71,10 +64,10 @@ abstract class Field implements FieldInterface
     public function name($name = null)
     {
         if ($name !== null) {
-            $this->name = $this->strip($name, false);
+            $this->attributes->set('name', $name);
         }
 
-        return $this->name;
+        return $this->attributes->get('name');
     }
 
     /**
@@ -87,10 +80,10 @@ abstract class Field implements FieldInterface
     public function value($value = null)
     {
         if ($value !== null) {
-            $this->value = htmlspecialchars($value);
+            $this->attributes->set('value', $value);
         }
 
-        return $this->value;
+        return $this->attributes->get('value');
     }
 
     /**
@@ -104,10 +97,10 @@ abstract class Field implements FieldInterface
     public function required($required = null)
     {
         if ($required !== null) {
-            $this->required = (bool) $required;
+            $this->attributes->set('required', (bool) $required);
         }
 
-        return $this->required;
+        return $this->attributes->get('required');
     }
 
     /**
@@ -116,62 +109,57 @@ abstract class Field implements FieldInterface
      *
      * @param string|array|callable $condition condition witch will be used
      * @param string                $message   error message if condition is not met
-     * @param bool                  $force     if true, condition is checked even if not required and empty
      *
-     * @return Field
+     * @return $this
      * @throws ConditionException
      */
-    public function condition($condition, $message, $force = false)
+    public function condition($condition, $message)
     {
-        if (!$force && !$this->required && $this->value === null) {
+        if (!$this->attributes->get('required') && $this->attributes->get('value') === null) {
             return $this;
         }
 
-        if (is_string($condition)) { // checks if condition is string (regexp)
-            if (is_scalar($this->value) && !preg_match($condition, $this->value)) {
-                $this
-                    ->errors()
-                    ->set($message);
-            }
-        } elseif (is_array($condition)) { // check if condition is array of permitted values
-            if (!in_array($this->value, $condition)) {
-                $this
-                    ->errors()
-                    ->set($message);
-            }
-        } elseif (is_callable($condition)) { // checks if condition is closure
-            if (!$condition($this->value)) {
-                $this
-                    ->errors()
-                    ->set($message);
-            }
-        } elseif (is_bool($condition)) { // checks boolean
-            if (!$condition) {
-                $this
-                    ->errors()
-                    ->set($message);
-            }
-        } else {
-            throw new ConditionException('Invalid condition for field "' . $this->name . '". Allowed condition types: regexp string, array of permitted values or closure');
+        if (!$this->validate($this->attributes->get('value'), $condition)) {
+            $this->errors->add(null, $message);
         }
 
-        $count = $this
-            ->errors()
-            ->count();
+        $count = $this->errors->count();
 
         if ($count) {
-            $this
-                ->attributes()
-                ->add('class', 'error');
+            $this->attributes->add('class', 'error');
         }
 
         return $this;
     }
 
     /**
+     * Returns true if value meets condition
+     *
+     * @param $value
+     * @param $condition
+     *
+     * @return bool|int
+     * @throws ConditionException
+     */
+    protected function validate($value, $condition)
+    {
+        if (is_bool($condition)) { // checks boolean
+            return $condition;
+        } elseif (is_scalar($condition)) { // checks if condition is string (regexp)
+            return preg_match($condition, $value);
+        } elseif (is_array($condition)) { // check if condition is array of permitted values
+            return in_array($value, $condition);
+        } elseif (is_callable($condition)) { // checks if condition is closure
+            return $condition($value);
+        } else {
+            throw new ConditionException('Invalid condition for field "' . $this->attributes->get('name', 'unnamed') . '". Allowed condition types: regexp string, array of permitted values or closure');
+        }
+    }
+
+    /**
      * Returns attribute bag interface
      *
-     * @return AttributesBag
+     * @return \Moss\Form\AttributeBag
      */
     public function attributes()
     {
@@ -185,19 +173,13 @@ abstract class Field implements FieldInterface
      */
     public function isValid()
     {
-        if (!$this->errors()) {
-            return true;
-        }
-
-        return $this
-            ->errors()
-            ->count() === 0;
+        return !$this->errors->has();
     }
 
     /**
      * Returns all error messages
      *
-     * @return ErrorsBag
+     * @return \Moss\Form\ErrorBag
      */
     public function errors()
     {
@@ -230,9 +212,7 @@ abstract class Field implements FieldInterface
      */
     public function renderError()
     {
-        return $this
-            ->errors()
-            ->toString();
+        return (string) $this->errors;
     }
 
     /**
@@ -252,35 +232,6 @@ abstract class Field implements FieldInterface
      */
     public function __toString()
     {
-        try {
-            return $this->render();
-        } catch(\Exception $e) {
-            return $e->getMessage() . ' (' . $e->getFile() . '::' . $e->getLine() . ')';
-        }
-    }
-
-    /**
-     * Strips string from invalid characters
-     *
-     * @param string $string     string to strip
-     * @param bool   $identifier if set to true, will return lowercase string
-     *
-     * @return string
-     */
-    protected function strip($string, $identifier = false)
-    {
-        $string = (string) $string;
-        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
-
-        if ($identifier) {
-            $string = strtolower($string);
-            $string = preg_replace('#[^a-z0-9_\-]+#i', '_', $string);
-        } else {
-            $string = preg_replace('#[^a-z0-9_\-\[\]]+#i', '_', $string);
-        }
-
-        $string = trim($string, '_');
-
-        return $string;
+        return $this->render();
     }
 }

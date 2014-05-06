@@ -14,26 +14,21 @@ use Moss\Form\Fieldset;
  */
 class Form extends Fieldset implements FormInterface
 {
-
-    protected $action;
-    protected $method;
-    protected $enctype;
-
     /**
      * Constructor
      *
      * @param string $action     target url
      * @param string $method     sending method
-     * @param string $enctype    encoding type
      * @param array  $attributes additional attributes
+     * @param string $enctype    encoding type
      */
-    public function __construct($action, $method = 'post', $enctype = 'multipart/form-data', $attributes = array())
+    public function __construct($action, $method = 'post', $attributes = array(), $enctype = 'multipart/form-data')
     {
+        parent::__construct(null, array(), $attributes);
+
         $this->action($action);
         $this->method($method);
         $this->enctype($enctype);
-
-        parent::__construct(null, array(), $attributes);
     }
 
     /**
@@ -46,10 +41,10 @@ class Form extends Fieldset implements FormInterface
     public function action($action = null)
     {
         if ($action !== null) {
-            $this->action = $action;
+            $this->attributes->set('action', $action);
         }
 
-        return $this->action;
+        return $this->attributes->get('action');
     }
 
     /**
@@ -62,10 +57,10 @@ class Form extends Fieldset implements FormInterface
     public function method($method = null)
     {
         if ($method !== null) {
-            $this->method = $method;
+            $this->attributes->set('method', $method);
         }
 
-        return $this->method;
+        return $this->attributes->get('method');
     }
 
     /**
@@ -78,10 +73,10 @@ class Form extends Fieldset implements FormInterface
     public function enctype($enctype = null)
     {
         if ($enctype !== null) {
-            $this->enctype = $enctype;
+            $this->attributes->set('enctype', $enctype);
         }
 
-        return $this->enctype;
+        return $this->attributes->get('enctype');
     }
 
     /**
@@ -93,40 +88,12 @@ class Form extends Fieldset implements FormInterface
     {
         $nodes = array();
 
-        $nodes[] = sprintf(
-            '<form action="%s" method="%s" %s>',
-            $this->action(),
-            $this->method(),
-            $this
-                ->attributes()
-                ->toString(array('enctype' => $this->enctype()))
-        );
-
+        $nodes[] = sprintf('<form %s>', $this->attributes->render());
         $nodes[] = '<fieldset>';
 
-        foreach ($this->struct as $field) {
-            if ($field->isVisible() === true) {
-                continue;
-            }
-
-            $nodes[] = (string) $field;
-        }
-
-        $nodes[] = sprintf('<%s %s>', $this->tag['group'], '');
-
-        if ($this->label) {
-            $nodes[] = sprintf('<legend>%s</legend>', $this->label());
-        }
-
-        foreach ($this->struct as $field) {
-            if ($field->isVisible() === false) {
-                continue;
-            }
-
-            $nodes[] = sprintf('<%1$s>%2$s</%1s>', $this->tag['element'], (string) $field);
-        }
-
-        $nodes[] = sprintf('</%s>', $this->tag['group']);
+        $this->renderLabel($nodes);
+        $this->renderHiddenFields($nodes);
+        $this->renderVisibleFields($nodes, array('id' => null, 'action' => null, 'method' => null, 'enctype' => null));
 
         $nodes[] = '</fieldset>';
         $nodes[] = '</form>';

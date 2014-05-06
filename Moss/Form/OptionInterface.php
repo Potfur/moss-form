@@ -35,14 +35,14 @@ interface OptionInterface
     /**
      * Returns attribute bag interface
      *
-     * @return BagInterface
+     * @return \Moss\Form\AttributeBag
      */
     public function attributes();
 
     /**
      * Returns options bag interface
      *
-     * @return BagInterface
+     * @return \Moss\Form\OptionBag
      */
     public function options();
 }

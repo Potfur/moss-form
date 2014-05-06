@@ -1,8 +1,6 @@
 <?php
 namespace Moss\Form;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\OptionsBag;
 use Moss\Form\Field;
 
 /**
@@ -30,29 +28,30 @@ class Option implements OptionInterface
      */
     public function __construct($label, $value = null, $attributes = array(), $options = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->options = new OptionBag($options);
+
         $this->label($label);
         $this->value($value);
-        $this->attributes = new AttributesBag($attributes);
-        $this->options = new OptionsBag($options);
     }
 
     /**
-     * Returns option identifier
-     * If no identifier is set - new is generated, based on option name
+     * Returns field identifier
+     * If no identifier is set - new is generated, based on field name
      *
-     * @param null|string $identifier option identifier
+     * @param null|string $identifier field identifier
      *
      * @return string
      */
     public function identify($identifier = null)
     {
         if ($identifier) {
-            $this->identifier = $this->strip($identifier, true);
-        } elseif (!$this->identifier) {
-            $this->identifier = $this->strip($this->value, true);
+            $this->attributes->set('id', $identifier);
+        } elseif (!$this->attributes->has('id')) {
+            $this->attributes->set('id', $this->attributes->get('name'));
         }
 
-        return $this->identifier;
+        return $this->attributes->get('id');
     }
 
     /**
@@ -60,33 +59,32 @@ class Option implements OptionInterface
      *
      * @param string $label field label
      *
-     * @return Field
+     * @return string
      */
     public function label($label = null)
     {
         if ($label !== null) {
-            $this->label = $label;
+            $this->attributes->set('label', $label);
         }
 
-        return $this->label;
+        return $this->attributes->get('label');
     }
 
     /**
-     * Sets option value
+     * Sets field value
      *
-     * @param mixed $value
+     * @param mixed $value field value
      *
-     * @return Field
+     * @return mixed
      */
     public function value($value = null)
     {
         if ($value !== null) {
-            $this->value = htmlspecialchars($value);
+            $this->attributes->set('value', $value);
         }
 
-        return $this->value;
+        return $this->attributes->get('value');
     }
-
 
     /**
      * Checks if field is visible
@@ -117,27 +115,5 @@ class Option implements OptionInterface
     public function options()
     {
         return $this->options;
-    }
-
-    /**
-     * Strips string from invalid characters
-     *
-     * @param string $string    string to strip
-     * @param bool   $lowercase if set to true, will return lowercase string
-     *
-     * @return string
-     */
-    private function strip($string, $lowercase = false)
-    {
-        $string = (string) $string;
-        $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
-        $string = preg_replace('#[^a-z0-9_\-\[\]]+#i', '_', $string);
-        $string = trim($string, '_');
-
-        if ($lowercase) {
-            $string = strtolower($string);
-        }
-
-        return $string;
     }
 }
