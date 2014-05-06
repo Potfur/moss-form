@@ -1,11 +1,11 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 use Moss\Form\OptionInterface;
-use Moss\Form\OptionsBag;
+use Moss\Form\OptionBag;
 use Moss\Form\ConditionException;
 
 /**
@@ -17,7 +17,7 @@ use Moss\Form\ConditionException;
 class Checkbox extends Field
 {
 
-    /** @var array|\Moss\Form\OptionsBag */
+    /** @var OptionBag */
     protected $options = array();
 
     private $tag = array(
@@ -28,22 +28,27 @@ class Checkbox extends Field
     /**
      * Constructor
      *
-     * @param string                  $name       field name
-     * @param null|string             $value      field value (checked values)
-     * @param null|string             $label      field label
-     * @param bool                    $required   if true "required" tag will be inserted into label
-     * @param array                   $attributes additional attributes as associative array
-     * @param array|OptionInterface[] $options    array of Option instances
+     * @param string            $name       field name
+     * @param null              $address    field value
+     * @param array             $attributes additional attributes as associative array
+     * @param OptionInterface[] $options    array of Option instances
      */
-    public function __construct($name, $value = null, $label = null, $required = false, $attributes = array(), $options = array())
+    public function __construct($name, $address = null, array $attributes = array(), $options = array())
     {
+        $this->attributes = new AttributeBag($attributes, array('class', 'value'));
+        $this->errors = new ErrorBag();
+        $this->options = new OptionBag($options);
+
         $this->name($name);
-        $this->value($value);
-        $this->label($label);
-        $this->required($required);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
-        $this->options = new OptionsBag($options);
+        $this->value($address);
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
@@ -53,20 +58,20 @@ class Checkbox extends Field
      *
      * @return Checkbox
      */
-    public function value($value = null)
+    public function value($value = array())
     {
-        if ($value === null) {
-            return $this->value;
+        if ($value !== array()) {
+            $value = (array) $value;
+            array_walk(
+                $value, function (&$v) {
+                    $v = htmlspecialchars($v);
+                }
+            );
+
+            $this->attributes->set('value', $value);
         }
 
-        $this->value = (array) $value;
-        array_walk(
-            $this->value, function (&$v) {
-                $v = htmlspecialchars($v);
-            }
-        );
-
-        return $this->value;
+        return $this->attributes->get('value');
     }
 
     /**
@@ -83,7 +88,7 @@ class Checkbox extends Field
     /**
      * Returns options bag interface
      *
-     * @return OptionsBag
+     * @return OptionBag
      */
     public function options()
     {
@@ -91,52 +96,41 @@ class Checkbox extends Field
     }
 
     /**
-     * Validates the field by given condition
-     * Condition can be: string (regular expression), array of values, function, closure or boolean
+     * Returns true if value meets condition
      *
-     * @param string|array|callable $condition condition witch will be used
-     * @param string                $message   error message if condition is not met
-     * @param bool                  $force     if true, condition is checked even if not required and empty
+     * @param $values
+     * @param $condition
      *
-     * @return Field
+     * @return bool|int
      * @throws ConditionException
      */
-    public function condition($condition, $message, $force = false)
+    protected function validate($values, $condition)
     {
-        if (!$force && !$this->required && $this->value === null) {
-            return $this;
-        }
-
         if (is_string($condition)) { // checks if condition is string (regexp)
-            foreach ($this->value as $value) {
-                if (is_scalar($value) && !preg_match($condition, $value)) {
-                    $this->errors->set($message);
-                    break;
+            foreach ($values as $value) {
+                if (!preg_match($condition, $value)) {
+                    return false;
                 }
             }
         } elseif (is_array($condition)) { // check if condition is array of permitted values
-            foreach ($this->value as $value) {
+            foreach ($values as $value) {
                 if (!in_array($value, $condition)) {
-                    $this->errors->set($message);
-                    break;
+                    return false;
                 }
             }
         } elseif (is_callable($condition)) { // checks if condition is closure
-            foreach ($this->value as $value) {
+            foreach ($values as $value) {
                 if (!$condition($value)) {
-                    $this->errors->set($message);
-                    break;
+                    return false;
                 }
             }
         } elseif (is_bool($condition)) { // checks boolean
-            if (!$condition) {
-                $this->errors->set($message);
-            }
+            return $condition;
         } else {
-            throw new ConditionException('Invalid condition for field "' . $this->name . '". Allowed condition types: regexp string, array of permitted values or closure');
+            throw new ConditionException('Invalid condition for field "' . $this->attributes->get('name', 'unnamed') . '". Allowed condition types: regexp string, array of permitted values or closure');
         }
 
-        return $this;
+        return true;
     }
 
     /**
@@ -146,18 +140,14 @@ class Checkbox extends Field
      */
     public function renderLabel()
     {
-        if (!$this->label) {
+        if (!$this->attributes->has('label') || ($this->options->count() == 1)) {
             return null;
         }
 
-        if (count($this->options) == 1) {
-            return parent::renderLabel();
-        }
-
         return sprintf(
-            '<span>%s</span>',
-            $this->label(),
-            $this->required() ? '<sup>*</sup>' : null
+            '<span>%s%s</span>',
+            $this->attributes->get('label'),
+            $this->attributes->get('required') ? '<sup>*</sup>' : null
         );
     }
 
@@ -171,16 +161,16 @@ class Checkbox extends Field
         $nodes = array();
 
         $nodes[] = sprintf(
-            '<%s %s>', $this->tag['group'], $this
-                         ->attributes()
-                         ->toString(array('id' => $this->identify()))
+            '<%s %s>',
+            $this->tag['group'],
+            $this->attributes->render(array('name' => null, 'label' => null, 'value' => null, 'required' => null))
         );
 
         $options = $this->options->all();
         $nodes[] = empty($options) ? $this->renderBlank() : $this->renderOptions($options);
         $nodes[] = sprintf('</%s>', $this->tag['group']);
 
-        return implode("\n", $nodes);
+        return implode(PHP_EOL, $nodes);
     }
 
     /**
@@ -203,33 +193,50 @@ class Checkbox extends Field
      * Renders options
      *
      * @param array|OptionInterface[] $options
+     * @param int                     $i
      *
      * @return null|string
      */
-    protected function renderOptions(array $options)
+    protected function renderOptions(array $options, &$i = 0)
     {
         if (empty($options)) {
             return null;
         }
 
         $nodes = array();
-        foreach ($options as $Option) {
-            $nodes[] = $this->renderOption($Option);
+        foreach ($options as $option) {
+            $nodes[] = $this->renderOption($option, $i);
         }
 
-        return implode("\n", $nodes);
+        return implode(PHP_EOL, $nodes);
     }
 
     /**
      * Renders single checkbox button
      *
      * @param OptionInterface $Option
+     * @param int             $i
      *
      * @return string
      */
-    protected function renderOption(OptionInterface $Option)
+    protected function renderOption(OptionInterface $Option, &$i)
     {
-        $id = $this->identify() . '_' . $Option->identify();
+        $attributes = array(
+            'id' => $Option->identify() ? $Option->identify() : $this->identify() . '_' . $i++,
+            'type' => 'checkbox',
+            'name' => $this->name() . '[]',
+            'label' => null,
+            'required' => $this->attributes->get('required') ? 'required' : null,
+            'checked' => in_array($Option->value(), (array) $this->attributes->get('value')) ? 'checked' : null
+        );
+
+        $field = sprintf(
+            '<input %1$s/><label for="%2$s" class="inline">%3$s</label>',
+            $Option->attributes()
+                ->render($attributes),
+            $this->attributes->get('id'),
+            $Option->label()
+        );
 
         $sub = null;
         $options = $Option
@@ -237,29 +244,13 @@ class Checkbox extends Field
             ->all();
 
         if (count($options)) {
-            $sub = sprintf(
-                '<%1$s class="options">%2$s</%1$s>',
-                $this->tag['group'],
-                "\n" . $this->renderOptions($options)
-            );
+            $sub = sprintf('<%1$s class="options">%2$s</%1$s>', $this->tag['group'], PHP_EOL . $this->renderOptions($options, $i));
         }
 
-        $attributes = array(
-            'required' => $this->required() && count($this->options) == 1,
-            'checked' => in_array($Option->value(), (array) $this->value) ? 'checked' : null
-        );
-
         $field = sprintf(
-            '<%1$s class="options"><input type="checkbox" name="%2$s[]" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s%7$s</label>%8$s</%1$s>',
+            '<%1$s class="options">%2$s%3$s</%1$s>',
             $this->tag['element'],
-            $this->name(),
-            $Option->label(),
-            $Option->value(),
-            $id,
-            $Option
-                ->attributes()
-                ->toString($attributes),
-            $attributes['required'] ? '<sup>*</sup>' : null,
+            $field,
             $sub
         );
 
@@ -272,16 +263,6 @@ class Checkbox extends Field
      * @return string
      */
     public function render()
-    {
-        return $this->renderLabel() . $this->renderError() . $this->renderField();
-    }
-
-    /**
-     * Returns prototype string (for javascript templates)
-     *
-     * @return string
-     */
-    public function prototype()
     {
         return $this->renderLabel() . $this->renderError() . $this->renderField();
     }

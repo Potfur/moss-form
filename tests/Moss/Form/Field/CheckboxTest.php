@@ -1,85 +1,313 @@
 <?php
-namespace Moss\Form\field;
+namespace Moss\Form\Field;
 
-use Moss\Form\AbstractFieldTest;
 use Moss\Form\Option;
 
-class CheckboxTest extends AbstractFieldTest
+class CheckboxTest extends \PHPUnit_Framework_TestCase
 {
 
-    public function setUp()
+    /**
+     * @dataProvider identifyProvider
+     */
+    public function testIdentifyFromConstructor($actual, $expected)
     {
-        $this->field = new Checkbox('name', 'value', 'label', true, array('class' => 'foo'));
-        $this->field->options()
-                    ->set(array(new Option('Option 1', 'option_1'), new Option('Option 2', 'option_2')));
+        $field = new Checkbox('name', array('value'), array('id' => $actual));
+        $this->assertEquals($expected, $field->identify());
     }
 
-    public function tearDown()
+    /**
+     * @dataProvider identifyProvider
+     */
+    public function testIdentifyFromMethod($actual, $expected)
     {
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertEquals($expected, $field->identify($actual));
+    }
+
+    public function identifyProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do_ku'),
+            array(null, 'name')
+        );
+    }
+
+    public function testIsVisible()
+    {
+        $field = new Checkbox('name', array('value'));
+        $this->assertTrue($field->isVisible());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromConstructor($actual, $expected)
+    {
+        $field = new Checkbox('name', array('value'), array('label' => $actual));
+        $this->assertEquals($expected, $field->label());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromMethod($actual, $expected)
+    {
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertEquals($expected, $field->label($actual));
+    }
+
+    public function labelProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromConstructor($actual, $expected)
+    {
+        $field = new Checkbox($actual, array('value'), array());
+        $this->assertEquals($expected, $field->name());
+    }
+
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromMethod($actual, $expected)
+    {
+        $field = new Checkbox(null, array('value'), array());
+        $this->assertEquals($expected, $field->name($actual));
+    }
+
+    public function nameProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do[ku]')
+        );
     }
 
     /**
      * @dataProvider valueProvider
      */
-    public function testValue($actual, $expected)
+    public function testValueFromConstructor($actual, $expected)
     {
-        $this->assertEquals($expected, $this->field->value($actual));
+        $field = new Checkbox('name', $actual, array());
+        $this->assertEquals($expected, $field->value());
+    }
+
+    /**
+     * @dataProvider valueProvider
+     */
+    public function testValueFromMethod($actual, $expected)
+    {
+        $field = new Checkbox('name', null, array());
+        $this->assertEquals($expected, $field->value($actual));
     }
 
     public function valueProvider()
     {
         return array(
-            array('foo', array('foo')),
-            array('Bar', array('Bar')),
-            array('yada yada', array('yada yada')),
-            array('do[ku]', array('do[ku]'))
+            array(array('foo'), array('foo')),
+            array(array('Bar'), array('Bar')),
+            array(array('yada yada'), array('yada yada')),
+            array(array('do[ku]'), array('do[ku]'))
         );
+    }
+
+    public function testError()
+    {
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+    }
+
+    /**
+     * @dataProvider conditionProvider
+     */
+    public function testCondition($condition, $isValid)
+    {
+        $field = new Checkbox('name', array('value'), array('required' => true));
+        $field->condition($condition, 'Error');
+        $this->assertEquals($isValid, $field->isValid());
+    }
+
+    public function conditionProvider()
+    {
+        return array(
+            array('/^[a-z]+$/', true),
+            array('/^[0-9]+$/', false),
+            array(array('value'), true),
+            array(array(), false),
+            array(
+                function ($value) {
+                    return $value === 'value';
+                },
+                true
+            ),
+            array(
+                function ($value) {
+                    return $value !== 'value';
+                },
+                false,
+            ),
+            array(true, true),
+            array(false, false)
+        );
+    }
+
+    public function testRequired()
+    {
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertFalse($field->required(false));
+        $this->assertTrue($field->required(true));
+    }
+
+    public function testAttributes()
+    {
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
     {
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>', $this->field->renderLabel());
+        $field = new Checkbox('name', array('value'), array('required'));
+        $this->assertEquals('<span>name<sup>*</sup></span>', $field->renderLabel());
     }
 
     public function testRenderField()
     {
-        $field = '<ul class="foo" id="name">
-<li class="options"><input type="checkbox" name="name[]" value="option_1" id="name_option_1" required="1"/><label for="name_option_1" class="inline">Option 1<sup>*</sup></label></li>
-<li class="options"><input type="checkbox" name="name[]" value="option_2" id="name_option_2" required="1"/><label for="name_option_2" class="inline">Option 2<sup>*</sup></label></li>
-</ul>';
-        $this->assertEquals($field, $this->field->renderField());
+        $field = new Checkbox('name', array('value'), array('required'));
+
+        $expected = array(
+            '<ul id="name">',
+            '<li><input type="checkbox" name="name[]" value="" id="name_empty"/><label for="name_empty" class="inline">---</label></li>',
+            '</ul>'
+        );
+
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->renderField());
     }
 
-    public function testRenderNoOptions()
+    public function testRenderErrorWithoutErrors()
     {
-        $field = '<ul class="foo" id="name">
-<li><input type="checkbox" name="name[]" value="" id="name_empty"/><label for="name_empty" class="inline">---</label></li>
-</ul>';
-        $this->field->options()
-                    ->set(array());
-        $this->assertEquals($field, $this->field->renderField());
+        $field = new Checkbox('name', array('value'), array());
+        $this->assertEquals('', $field->renderError());
     }
 
-    public function testRenderError()
+    public function testRenderErrorWithErrors()
     {
-        $this->assertEquals('', $this->field->renderError());
+        $field = new Checkbox('name', array('value'), array());
+        $field->condition(false, 'Error');
+
+        $this->assertEquals('<ul class="error"><li>Error</li></ul>', $field->renderError());
     }
 
-    public function testRender()
+    public function testRenderNoOption()
     {
-        $field = '<ul class="foo" id="name">
-<li class="options"><input type="checkbox" name="name[]" value="option_1" id="name_option_1" required="1"/><label for="name_option_1" class="inline">Option 1<sup>*</sup></label></li>
-<li class="options"><input type="checkbox" name="name[]" value="option_2" id="name_option_2" required="1"/><label for="name_option_2" class="inline">Option 2<sup>*</sup></label></li>
-</ul>';
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>' . $field, $this->field->__toString());
+        $expected = array(
+            '<span>label</span><ul id="id" class="foo">',
+            '<li><input type="checkbox" name="name[]" value="" id="id_empty"/><label for="id_empty" class="inline">---</label></li>',
+            '</ul>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'class' => array('foo')
+        );
+
+        $options = array();
+
+        $field = new Checkbox('name', array('value'), $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderOneOption()
+    {
+        $expected = array(
+            '<ul id="id" class="foo">',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label></li>',
+            '</ul>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1)
+        );
+
+        $field = new Checkbox('name', array('value'), $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderMultipleOptions()
+    {
+        $expected = array(
+            '<span>label<sup>*</sup></span><ul id="id" class="foo">',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label></li>',
+            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="2" required="required"/><label for="id" class="inline">Some label 2</label></li>',
+            '</ul>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1),
+            new Option('Some label 2', 2)
+        );
+
+        $field = new Checkbox('name', array('value'), $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderSubOptions()
+    {
+        $expected = array(
+            '<span>label<sup>*</sup></span><ul id="id" class="foo">',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label><ul class="options">',
+            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="1.2" required="required"/><label for="id" class="inline">Some label 1.2</label></li></ul></li>',
+            '<li class="options"><input type="checkbox" id="id_2" name="name[]" value="2" required="required"/><label for="id" class="inline">Some label 2</label></li>',
+            '</ul>',
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1, array(), array(new Option('Some label 1.2', 1.2))),
+            new Option('Some label 2', 2)
+        );
+
+        $field = new Checkbox('name', array('value'), $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
     }
 
     public function testToString()
     {
-        $field = '<ul class="foo" id="name">
-<li class="options"><input type="checkbox" name="name[]" value="option_1" id="name_option_1" required="1"/><label for="name_option_1" class="inline">Option 1<sup>*</sup></label></li>
-<li class="options"><input type="checkbox" name="name[]" value="option_2" id="name_option_2" required="1"/><label for="name_option_2" class="inline">Option 2<sup>*</sup></label></li>
-</ul>';
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>' . $field, $this->field->__toString());
+        $field = new Checkbox('name', array('value'), array('id' => 'id', 'label' => 'label', 'class' => array('foo')));
+        $this->assertEquals($field->render(), $field->__toString());
     }
 }
