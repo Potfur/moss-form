@@ -1,9 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ConditionException;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -19,33 +18,40 @@ class Button extends Field
      * Constructor
      *
      * @param string $name       field name
-     * @param string $value      field value
-     * @param string $label      field label
+     * @param null   $value      field value
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $value = null, $label = null, $attributes = array())
+    public function __construct($name, $value = null, array $attributes = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+
         $this->name($name);
         $this->value($value);
-        $this->label($label);
-        $this->errors = new ErrorsBag();
-        $this->attributes = new AttributesBag($attributes);
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
-     * Sets field name
+     * Sets field label
      *
-     * @param string $name
+     * @param string $label field label
      *
-     * @return $this
+     * @return string
      */
-    public function name($name = null)
+    public function label($label = null)
     {
-        if ($name !== null) {
-            $this->name = $name;
+        if ($label !== null) {
+            $this->attributes->set('label', $label);
         }
 
-        return $this->name;
+        return $this->attributes->get('label');
     }
 
     /**
@@ -60,15 +66,15 @@ class Button extends Field
     }
 
     /**
-     * Button is value less
+     * Validates the field by given condition
+     * Condition can be: string (regular expression), array of values, function, closure or boolean
      *
-     * @param array|callable|string $condition
-     * @param string                $message
-     * @param bool                  $force
+     * @param string|array|callable $condition condition witch will be used
+     * @param string                $message   error message if condition is not met
      *
      * @return Field
      */
-    public function condition($condition, $message, $force = false)
+    public function condition($condition, $message)
     {
         return $this;
     }
@@ -103,14 +109,9 @@ class Button extends Field
     public function renderField()
     {
         return sprintf(
-            '<button type="button" name="%1$s" value="%2$s" id="%3$s" %5$s>%4$s</button>',
-            $this->name(),
-            $this->value(),
-            $this->identify(),
-            $this->label(),
-            $this
-                ->attributes()
-                ->toString()
+            '<button %s>%s</button>',
+            $this->attributes->render(array('label' => null)),
+            $this->attributes->get('label')
         );
     }
 

@@ -1,29 +1,63 @@
 <?php
-namespace Moss\Form\field;
+namespace Moss\Form\Field;
 
-use Moss\Form\AbstractFieldTest;
-
-class ButtonTest extends AbstractFieldTest
+class ButtonTest extends \PHPUnit_Framework_TestCase
 {
 
-    public function setUp()
+    /**
+     * @dataProvider identifyProvider
+     */
+    public function testIdentifyFromConstructor($actual, $expected)
     {
-        $this->field = new Button('name', 'value', 'label', array('class' => 'foo'));
-    }
-
-    public function tearDown()
-    {
+        $field = new Button('name', 'value', array('id' => $actual));
+        $this->assertEquals($expected, $field->identify());
     }
 
     /**
-     * @dataProvider nameProvider
+     * @dataProvider identifyProvider
      */
-    public function testName($actual, $expected)
+    public function testIdentifyFromMethod($actual, $expected)
     {
-        $this->assertEquals($expected, $this->field->name($actual));
+        $field = new Button('name', 'value');
+        $this->assertEquals($expected, $field->identify($actual));
     }
 
-    public function nameProvider()
+    public function identifyProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do_ku'),
+            array(null, 'name')
+        );
+    }
+
+    public function testIsVisible()
+    {
+        $field = new Button('name', 'value');
+        $this->assertTrue($field->isVisible());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromConstructor($actual, $expected)
+    {
+        $field = new Button('name', 'value', array('label' => $actual));
+        $this->assertEquals($expected, $field->label());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromMethod($actual, $expected)
+    {
+        $field = new Button('name', 'value', array());
+        $this->assertEquals($expected, $field->label($actual));
+    }
+
+    public function labelProvider()
     {
         return array(
             array('foo', 'foo'),
@@ -33,34 +67,116 @@ class ButtonTest extends AbstractFieldTest
         );
     }
 
-    public function testCondition()
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromConstructor($actual, $expected)
     {
-        $this->field->condition('foo', 'Error');
-        $this->assertTrue($this->field->isValid());
+        $field = new Button($actual, 'value', array());
+        $this->assertEquals($expected, $field->name());
+    }
+
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromMethod($actual, $expected)
+    {
+        $field = new Button(null, 'value', array());
+        $this->assertEquals($expected, $field->name($actual));
+    }
+
+    public function nameProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    /**
+     * @dataProvider valueProvider
+     */
+    public function testValueFromConstructor($actual, $expected)
+    {
+        $field = new Button('name', $actual, array());
+        $this->assertEquals($expected, $field->value());
+    }
+
+    /**
+     * @dataProvider valueProvider
+     */
+    public function testValueFromMethod($actual, $expected)
+    {
+        $field = new Button('name', null, array());
+        $this->assertEquals($expected, $field->value($actual));
+    }
+
+    public function valueProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    public function testError()
+    {
+        $field = new Button('name', 'value', array());
+        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+    }
+
+    public function testRequired()
+    {
+        $field = new Button('name', 'value', array());
+        $this->assertFalse($field->required(false));
+        $this->assertTrue($field->required(true));
+    }
+
+    public function testAttributes()
+    {
+        $field = new Button('name', 'value', array());
+        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
     {
-        $this->assertNull($this->field->renderLabel());
+        $field = new Button('name', 'value');
+        $this->assertNull($field->renderLabel());
     }
 
     public function testRenderField()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">label</button>', $this->field->renderField());
+        $field = new Button('name', 'value', array('label' => 'Press this'));
+        $this->assertEquals('<button id="name" name="name" value="value">Press this</button>', $field->renderField());
     }
 
-    public function testRenderError()
+    public function testRenderErrorWithoutErrors()
     {
-        $this->assertNull($this->field->renderError());
+        $field = new Button('name', 'value', array());
+        $this->assertEquals('', $field->renderError());
+    }
+
+    public function testRenderErrorWithErrors()
+    {
+        $field = new Button('name', 'value', array());
+        $field->condition(false, 'Error');
+
+        $this->assertEquals('', $field->renderError());
     }
 
     public function testRender()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">label</button>', $this->field->render());
+        $field = new Button('name', 'value', array('id' => 'id', 'label' => 'Button text', 'class' => array('foo')));
+        $this->assertEquals('<button id="id" name="name" value="value" class="foo">Button text</button>', $field->render());
     }
 
     public function testToString()
     {
-        $this->assertEquals('<button type="button" name="name" value="value" id="name" class="foo">label</button>', $this->field->__toString());
+        $field = new Button('name', 'value', array('id' => 'id', 'label' => 'Button text', 'class' => array('foo')));
+        $this->assertEquals($field->render(), $field->__toString());
     }
 }
