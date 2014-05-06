@@ -1,8 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -18,33 +18,57 @@ class Anchor extends Field
     /**
      * Constructor
      *
-     * @param string $name       name
-     * @param string $address    url to redirect to
-     * @param array  $attributes additional attributes
+     * @param string $name       field name
+     * @param null   $address    field value
+     * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $address, $attributes = array())
+    public function __construct($name, $address = null, array $attributes = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+
         $this->name($name);
         $this->value($address);
-        $this->errors = new ErrorsBag();
-        $this->attributes = new AttributesBag($attributes);
-        $this->attributes->add('class', 'button');
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
-     * Sets field name
+     * Sets field label
      *
-     * @param string $name
+     * @param string $label field label
      *
      * @return string
      */
-    public function name($name = null)
+    public function label($label = null)
     {
-        if ($name !== null) {
-            $this->name = $name;
+        if ($label !== null) {
+            $this->attributes->set('label', $label);
         }
 
-        return $this->name;
+        return $this->attributes->get('label');
+    }
+
+    /**
+     * Sets field value
+     *
+     * @param mixed $value field value
+     *
+     * @return mixed
+     */
+    public function value($value = null)
+    {
+        if ($value !== null) {
+            $this->attributes->set('href', $value);
+        }
+
+        return $this->attributes->get('href');
     }
 
     /**
@@ -58,6 +82,19 @@ class Anchor extends Field
         return true;
     }
 
+    /**
+     * Validates the field by given condition
+     * Condition can be: string (regular expression), array of values, function, closure or boolean
+     *
+     * @param string|array|callable $condition condition witch will be used
+     * @param string                $message   error message if condition is not met
+     *
+     * @return Field
+     */
+    public function condition($condition, $message)
+    {
+        return $this;
+    }
 
     /**
      * Renders label
@@ -77,13 +114,9 @@ class Anchor extends Field
     public function renderField()
     {
         return sprintf(
-            '<a href="%2$s" id="%3$s" %4$s>%1$s</a>',
-            $this->name(),
-            $this->value(),
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString()
+            '<a %s>%s</a>',
+            $this->attributes->render(array('name' => null, 'label' => null)),
+            $this->attributes->get('label')
         );
     }
 
