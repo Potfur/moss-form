@@ -235,7 +235,7 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
     {
         $expected = array(
             '<ul id="id" class="foo">',
-            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label></li>',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id_0" class="inline">Some label 1</label></li>',
             '</ul>'
         );
 
@@ -258,8 +258,8 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
     {
         $expected = array(
             '<span>label<sup>*</sup></span><ul id="id" class="foo">',
-            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label></li>',
-            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="2" required="required"/><label for="id" class="inline">Some label 2</label></li>',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id_0" class="inline">Some label 1</label></li>',
+            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="2" required="required"/><label for="id_1" class="inline">Some label 2</label></li>',
             '</ul>'
         );
 
@@ -283,9 +283,9 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
     {
         $expected = array(
             '<span>label<sup>*</sup></span><ul id="id" class="foo">',
-            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id" class="inline">Some label 1</label><ul class="options">',
-            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="1.2" required="required"/><label for="id" class="inline">Some label 1.2</label></li></ul></li>',
-            '<li class="options"><input type="checkbox" id="id_2" name="name[]" value="2" required="required"/><label for="id" class="inline">Some label 2</label></li>',
+            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id_0" class="inline">Some label 1</label><ul class="options">',
+            '<li class="options"><input type="checkbox" id="id_1" name="name[]" value="1.2" required="required"/><label for="id_1" class="inline">Some label 1.2</label></li></ul></li>',
+            '<li class="options"><input type="checkbox" id="id_2" name="name[]" value="2" required="required"/><label for="id_2" class="inline">Some label 2</label></li>',
             '</ul>',
         );
 

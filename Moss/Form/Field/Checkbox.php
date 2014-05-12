@@ -234,7 +234,7 @@ class Checkbox extends Field
             '<input %1$s/><label for="%2$s" class="inline">%3$s</label>',
             $Option->attributes()
                 ->render($attributes),
-            $this->attributes->get('id'),
+            $attributes['id'],
             $Option->label()
         );
 
