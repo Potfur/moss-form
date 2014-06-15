@@ -1,12 +1,10 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\Field\Checkbox;
-use Moss\Form\OptionGroupInterface;
 use Moss\Form\OptionInterface;
 
 /**
- * Select form field
+ * Select form field with multiple choices
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
@@ -21,15 +19,15 @@ class SelectMultiple extends Checkbox
      */
     public function renderLabel()
     {
-        if (!$this->label()) {
+        if (!$this->attributes->has('label') || ($this->options->count() == 1)) {
             return null;
         }
 
         return sprintf(
             '<label for="%s">%s%s</label>',
-            $this->identify(),
-            $this->label(),
-            $this->required() ? '<sup>*</sup>' : null
+            $this->attributes->get('id'),
+            $this->attributes->get('label'),
+            $this->attributes->get('required') ? '<sup>*</sup>' : null
         );
     }
 
@@ -43,19 +41,17 @@ class SelectMultiple extends Checkbox
         $nodes = array();
 
         $nodes[] = sprintf(
-            '<select name="%s" id="%s" multiple="multiple" %s>',
-            $this->name(),
-            $this->identify(),
+            '<select %s>',
             $this
                 ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null))
+                ->render(array('label' => null, 'value' => null))
         );
 
         $options = $this->options->all();
         $nodes[] = empty($options) ? $this->renderBlank() : $this->renderOptions($options);
         $nodes[] = sprintf('</select>');
 
-        return implode("\n", $nodes);
+        return implode(PHP_EOL, $nodes);
     }
 
     /**
@@ -72,12 +68,24 @@ class SelectMultiple extends Checkbox
      * Renders single checkbox button
      *
      * @param OptionInterface $Option
+     * @param int             $i
      *
      * @return string
      */
-    protected function renderOption(OptionInterface $Option)
+    protected function renderOption(OptionInterface $Option, &$i)
     {
-        $id = $this->identify() . '_' . $Option->identify();
+        $attributes = array(
+            'id' => $Option->identify() ? $Option->identify() : $this->identify() . '_' . $i++,
+            'label' => null,
+            'selected' => $Option->value() == $this->attributes->get('value') ? 'selected' : null
+        );
+
+        $field = sprintf(
+            '<option %s/>%s</option>',
+            $Option->attributes()
+                ->render($attributes),
+            $Option->label()
+        );
 
         $sub = null;
         $options = $Option
@@ -85,24 +93,11 @@ class SelectMultiple extends Checkbox
             ->all();
 
         if (count($options)) {
-            $sub = sprintf(
-                '<%1$s label="%2$s">%3$s</%1$s>',
-                'optgroup',
-                $Option->label(),
-                $this->renderOptions($options)
-            );
+            $sub = sprintf('<optgroup label="%s">%s</optgroup>', $Option->label(), $this->renderOptions($options));
+            $field .= $sub;
         }
 
-        return sprintf(
-            '<option value="%s" id="%s" %s>%s</option>%s',
-            $Option->value(),
-            $id,
-            $Option
-                ->attributes()
-                ->toString(array('selected' => $Option->value() == $this->value ? 'selected' : null)),
-            $Option->label(),
-            $sub
-        );
+        return $field;
     }
 
     /**

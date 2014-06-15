@@ -1,8 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -12,22 +12,24 @@ use Moss\Form\Field;
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
  */
-class Paragraph extends Field
+class PlainText extends Field
 {
+    private $tag;
 
     /**
      * Constructor
      *
-     * @param string $name
      * @param string $text
      * @param array  $attributes
+     * @param string $tag
      */
-    public function __construct($name, $text = null, $attributes = array())
+    public function __construct($text, $attributes = array(), $tag = 'p')
     {
-        $this->name($name);
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+        $this->tag = $tag;
+
         $this->value($text);
-        $this->errors = new ErrorsBag();
-        $this->attributes = new AttributesBag($attributes);
     }
 
     /**
@@ -59,11 +61,11 @@ class Paragraph extends Field
     public function renderField()
     {
         return sprintf(
-            '<p %2$s>%1$s</p>',
+            '<%1$s %3$s>%2$s</%1$s>',
+            $this->tag,
             $this->value(),
-            $this
-                ->attributes()
-                ->toString()
+            $this->attributes()
+                ->render(array('value' => null))
         );
     }
 

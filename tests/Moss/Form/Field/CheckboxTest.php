@@ -190,7 +190,7 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
 
         $expected = array(
             '<ul id="name">',
-            '<li><input type="checkbox" name="name[]" value="" id="name_empty"/><label for="name_empty" class="inline">---</label></li>',
+            '<li class="options"><input type="radio" id="name_empty" name="name[]" value="value" required="required"/><label for="name_empty" class="inline">--</label></li>',
             '</ul>'
         );
 
@@ -215,7 +215,7 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
     {
         $expected = array(
             '<span>label</span><ul id="id" class="foo">',
-            '<li><input type="checkbox" name="name[]" value="" id="id_empty"/><label for="id_empty" class="inline">---</label></li>',
+            '<li class="options"><input type="radio" id="id_empty" name="name[]" value="value" class="foo"/><label for="id_empty" class="inline">--</label></li>',
             '</ul>'
         );
 

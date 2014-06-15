@@ -56,7 +56,7 @@ class Checkbox extends Field
      *
      * @param array $value
      *
-     * @return Checkbox
+     * @return mixed
      */
     public function value($value = array())
     {
@@ -97,29 +97,31 @@ class Checkbox extends Field
 
     /**
      * Returns true if value meets condition
+
      *
-     * @param $values
-     * @param $condition
+*@param array $value
+     * @param mixed $condition
+
      *
-     * @return bool|int
+*@return bool|int
      * @throws ConditionException
      */
-    protected function validate($values, $condition)
+    protected function validate($value, $condition)
     {
         if (is_string($condition)) { // checks if condition is string (regexp)
-            foreach ($values as $value) {
+            foreach ($value as $value) {
                 if (!preg_match($condition, $value)) {
                     return false;
                 }
             }
         } elseif (is_array($condition)) { // check if condition is array of permitted values
-            foreach ($values as $value) {
+            foreach ($value as $value) {
                 if (!in_array($value, $condition)) {
                     return false;
                 }
             }
         } elseif (is_callable($condition)) { // checks if condition is closure
-            foreach ($values as $value) {
+            foreach ($value as $value) {
                 if (!$condition($value)) {
                     return false;
                 }
@@ -180,14 +182,31 @@ class Checkbox extends Field
      */
     protected function renderBlank()
     {
-        return sprintf(
-            '<%1$s><input type="checkbox" name="%2$s[]" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
-            $this->tag['element'],
-            $this->name(),
-            $this->identify() . '_empty'
+        $attributes = array(
+            'id' => $this->identify() . '_empty',
+            'type' => 'radio',
+            'name' => $this->name() . '[]',
+            'label' => null,
+            'required' => $this->attributes->get('required') ? 'required' : null,
+            'checked' => null
         );
-    }
 
+        $field = sprintf(
+            '<input %1$s/><label for="%2$s" class="inline">%3$s</label>',
+            $this->attributes()
+                ->render($attributes),
+            $attributes['id'],
+            '--'
+        );
+
+        $field = sprintf(
+            '<%1$s class="options">%2$s</%1$s>',
+            $this->tag['element'],
+            $field
+        );
+
+        return $field;
+    }
 
     /**
      * Renders options

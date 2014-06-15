@@ -15,18 +15,20 @@ class Password extends Text
     /**
      * Renders field
      *
+     * @param mixed $value
+     *
      * @return string
      */
-    public function renderField()
+    public function renderField($value = null)
     {
         return sprintf(
-            '<input type="password" name="%s" value="%s" id="%s" %s/>',
-            $this->name(),
-            null,
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null))
+            '<input %s/>',
+            $this->attributes->render(
+                array(
+                    'type' => 'password',
+                    'label' => null,
+                )
+            )
         );
     }
 }

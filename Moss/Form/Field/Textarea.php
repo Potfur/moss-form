@@ -1,12 +1,12 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
- * Textarea
+ * Textarea (multiline text field)
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
@@ -14,37 +14,28 @@ use Moss\Form\Field;
 class Textarea extends Field
 {
 
-    protected $cols = 20;
-    protected $rows = 10;
-
     /**
      * Constructor
      *
      * @param string $name       field name
      * @param null   $value      field value
-     * @param null   $label      field label
-     * @param bool   $required   if true "required" tag will be inserted into field label
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $value = null, $label = null, $required = false, $attributes = array())
+    public function __construct($name, $value = null, array $attributes = array())
     {
+        $this->attributes = new AttributeBag(array_merge(array('cols' => 20, 'rows' => 10), $attributes));
+        $this->errors = new ErrorBag();
+
         $this->name($name);
         $this->value($value);
-        $this->label($label);
-        $this->required($required);
 
-        if (isset($attributes['cols'])) {
-            $this->cols($attributes['cols']);
-            unset($attributes['cols']);
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
         }
 
-        if (isset($attributes['rows'])) {
-            $this->rows($attributes['rows']);
-            unset($attributes['rows']);
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
         }
-
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
     }
 
     /**
@@ -69,10 +60,10 @@ class Textarea extends Field
     public function cols($cols = null)
     {
         if ($cols !== null) {
-            $this->cols = (int) $cols;
+            $this->attributes->set('cols', $cols);
         }
 
-        return $this->cols;
+        return $this->attributes->get('cols');
     }
 
     /**
@@ -85,10 +76,10 @@ class Textarea extends Field
     public function rows($rows = null)
     {
         if ($rows !== null) {
-            $this->rows = (int) $rows;
+            $this->attributes->set('rows', $rows);
         }
 
-        return $this->rows;
+        return $this->attributes->get('rows');
     }
 
     /**
@@ -99,14 +90,10 @@ class Textarea extends Field
     public function renderField()
     {
         return sprintf(
-            '<textarea name="%s" id="%s" rows="%u" cols="%u" %s>%s</textarea>',
-            $this->name(),
-            $this->identify(),
-            $this->rows(),
-            $this->cols(),
+            '<textarea %s>%s</textarea>',
             $this
                 ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null)),
+                ->render(array('label' => null, 'value' => null)),
             $this->value()
         );
     }

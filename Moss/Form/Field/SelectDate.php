@@ -1,75 +1,152 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
-use Moss\Form\Field;
-
 /**
- * Input/Text
+ * Select date field set
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
  */
-class SelectDate extends Field
+class SelectDate extends Date
 {
 
-    private $format = 'Y-m-d H:i:s';
-    private $period = 50;
-
-    /** @var \DateTime */
-    protected $value;
-
+    private $options = array(
+        'year' => array('from' => null, 'to' => null, 'step' => 1),
+        'month' => array('from' => 1, 'to' => 12, 'step' => 1),
+        'day' => array('from' => 1, 'to' => 31, 'step' => 1),
+        'hour' => array('from' => 0, 'to' => 23, 'step' => 1),
+        'minute' => array('from' => 0, 'to' => 59, 'step' => 1),
+        'second' => array('from' => 0, 'to' => 59, 'step' => 1),
+    );
 
     /**
      * Constructor
      *
      * @param string $name       field name
      * @param null   $value      field value
-     * @param null   $label      field label
-     * @param bool   $required   if true "required" tag will be inserted into label
      * @param array  $attributes additional attributes as associative array
+     * @param int    $period     number of years in past and in future
      */
-    public function __construct($name, $value = null, $label = null, $required = false, $attributes = array())
+    public function __construct($name, $value = null, array $attributes = array(), $period = 25)
     {
-        $this->name($name);
-        $this->value($value);
-        $this->label($label, $required);
-        $this->required($required);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
+        parent::__construct($name, $value, $attributes);
+
+        $from = new \DateTime(sprintf('-%u years', $period));
+        $to = new \DateTime(sprintf('+%u years', $period));
+
+        $this->setYearsRange($from->format('Y'), $to->format('Y'))
+            ->setMonthsRange()
+            ->setDaysRange()
+            ->setHoursRange()
+            ->setMinutesRange()
+            ->setSecondsRange();
     }
 
     /**
-     * Sets date format
+     * Sets year range
      *
-     * @param string $format
+     * @param int $form
+     * @param int $to
+     * @param int $step
      *
-     * @return string
+     * @return $this
      */
-    public function format($format = null)
+    public function setYearsRange($form = null, $to = null, $step = 1)
     {
-        if ($format !== null) {
-            $this->format = $format;
-        }
+        $this->range('year', $form, $to, $step);
 
-        return $this->format;
+        return $this;
     }
 
     /**
-     * Sets year period range
+     * Sets month range
      *
-     * @param int $period
+     * @param int $form
+     * @param int $to
+     * @param int $step
      *
-     * @return int
+     * @return $this
      */
-    public function period($period = null)
+    public function setMonthsRange($form = 1, $to = 12, $step = 1)
     {
-        if ($period !== null) {
-            $this->period = (int) $period;
-        }
+        $this->range('month', $form, $to, $step);
 
-        return $this->period;
+        return $this;
+    }
+
+    /**
+     * Sets day range
+     *
+     * @param int $form
+     * @param int $to
+     * @param int $step
+     *
+     * @return $this
+     */
+    public function setDaysRange($form = 1, $to = 31, $step = 1)
+    {
+        $this->range('day', $form, $to, $step);
+
+        return $this;
+    }
+
+    /**
+     * Sets hours range
+     *
+     * @param int $form
+     * @param int $to
+     * @param int $step
+     *
+     * @return $this
+     */
+    public function setHoursRange($form = 0, $to = 23, $step = 1)
+    {
+        $this->range('hour', $form, $to, $step);
+
+        return $this;
+    }
+
+    /**
+     * Sets minutes range
+     *
+     * @param int $form
+     * @param int $to
+     * @param int $step
+     *
+     * @return $this
+     */
+    public function setMinutesRange($form = 0, $to = 59, $step = 1)
+    {
+        $this->range('minute', $form, $to, $step);
+
+        return $this;
+    }
+
+    /**
+     * Sets seconds range
+     *
+     * @param int $form
+     * @param int $to
+     * @param int $step
+     *
+     * @return $this
+     */
+    public function setSecondsRange($form = 0, $to = 59, $step = 1)
+    {
+        $this->range('second', $form, $to, $step);
+
+        return $this->options['second'];
+    }
+
+    /**
+     * @param string $key
+     * @param int    $from
+     * @param int    $to
+     * @param int    $step
+     */
+    protected function range($key, $from, $to, $step)
+    {
+        $this->options[$key] = array('from' => (int) $from, 'to' => (int) $to, 'step' => (int) $step);
     }
 
     /**
@@ -112,40 +189,39 @@ class SelectDate extends Field
     {
         $fields = array();
 
+        $value = $this->value ? $this->value : new \DateTime();
+
         if ($key = $this->check('LoYy')) {
-            $s = date('Y') - ceil($this->period / 2);
-            $e = $s + (int) $this->period;
-            $fields['{' . $key . '}'] = $this->renderSelect('year', $this->renderOptions($s, $e, $this->value->format('Y')));
+            $fields['{' . $key . '}'] = $this->renderSelect('year', $this->renderOptions($this->options['year'], $value->format('Y')));
         }
 
         if ($key = $this->check('FMmnt')) {
-            $fields['{' . $key . '}'] = $this->renderSelect('month', $this->renderOptions(1, 12, $this->value->format('m')));
+            $fields['{' . $key . '}'] = $this->renderSelect('month', $this->renderOptions($this->options['month'], $value->format('m')));
         }
 
         if ($key = $this->check('dDjlNSwz')) {
-            $fields['{' . $key . '}'] = $this->renderSelect('day', $this->renderOptions(1, 31, $this->value->format('d')));
+            $fields['{' . $key . '}'] = $this->renderSelect('day', $this->renderOptions($this->options['day'], $value->format('d')));
         }
 
         if ($key = $this->check('gGhH')) {
-            $fields['{' . $key . '}'] = $this->renderSelect('hour', $this->renderOptions(0, 23, $this->value->format('H')));
+            $fields['{' . $key . '}'] = $this->renderSelect('hour', $this->renderOptions($this->options['hour'], $value->format('H')));
         }
 
         if ($key = $this->check('i')) {
-            $fields['{' . $key . '}'] = $this->renderSelect('minute', $this->renderOptions(0, 59, $this->value->format('i')));
+            $fields['{' . $key . '}'] = $this->renderSelect('minute', $this->renderOptions($this->options['minute'], $value->format('i')));
         }
 
         if ($key = $this->check('s')) {
-            $fields['{' . $key . '}'] = $this->renderSelect('year', $this->renderOptions(0, 59, $this->value->format('s')));
+            $fields['{' . $key . '}'] = $this->renderSelect('second', $this->renderOptions($this->options['second'], $value->format('s')));
         }
 
         $format = $this->format;
         $format = preg_replace('/([a-z])/im', '<li>{$1}</li>', $format);
         $format = preg_replace('/([^a-z{}<>\/ ])/im', '<li>$1</li>', $format);
         $format = sprintf(
-            '<ul %s>%s</ul>',
-            $this
-                ->attributes()
-                ->toString(),
+            '<ul id="%s" class="%s">%s</ul>',
+            $this->attributes->get('id'),
+            implode(' ', (array) $this->attributes->get('class')),
             $format
         );
 
@@ -167,21 +243,25 @@ class SelectDate extends Field
     {
         return sprintf(
             '<select name="%1$s[%2$s]" class="date %2$s small">%3$s</select>',
-            $this->name,
+            $this->attributes->get('name'),
             $name,
-            implode($options)
+            $options
         );
     }
 
-    private function renderOptions($start, $end, $selected = null)
+    private function renderOptions($options, $selected = null)
     {
-        $options = array();
-        for ($i = $start; $i <= $end; $i++) {
-            $v = str_pad($i, 2, '0', \STR_PAD_LEFT);
-            $options[] = sprintf('<option value="%1$s" %3$s>%2$s</option>', $v, $i, $selected == $v ? 'selected="selected"' : null);
+        $nodes = array();
+        for ($i = $options['from']; $i <= $options['to']; $i += $options['step']) {
+            $nodes[] = sprintf(
+                '<option value="%1$s" %3$s>%2$s</option>',
+                $i,
+                str_pad($i, 2, '0', \STR_PAD_LEFT),
+                $selected == $i ? 'selected="selected"' : null
+            );
         }
 
-        return $options;
+        return implode('', $nodes);
     }
 }
 

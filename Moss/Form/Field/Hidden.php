@@ -1,8 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -21,12 +21,21 @@ class Hidden extends Field
      * @param null   $value      field value
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $value = null, $attributes = array())
+    public function __construct($name, $value = null, array $attributes = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+
         $this->name($name);
         $this->value($value);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
@@ -53,18 +62,20 @@ class Hidden extends Field
     /**
      * Renders field
      *
+     * @param mixed $value
+     *
      * @return string
      */
-    public function renderField()
+    public function renderField($value = null)
     {
         return sprintf(
-            '<input type="hidden" name="%s" value="%s" id="%s" %s/>',
-            $this->name(),
-            $this->value(),
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString()
+            '<input %s/>',
+            $this->attributes->render(
+                array(
+                    'type' => 'hidden',
+                    'label' => null,
+                )
+            )
         );
     }
 }

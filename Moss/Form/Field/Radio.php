@@ -1,14 +1,14 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 use Moss\Form\OptionInterface;
-use Moss\Form\OptionsBag;
+use Moss\Form\OptionBag;
 
 /**
- * Input/Checkbox
+ * Radio form field
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
@@ -16,7 +16,7 @@ use Moss\Form\OptionsBag;
 class Radio extends Field
 {
 
-    /** @var array|\Moss\Form\OptionsBag */
+    /** @var array|\Moss\Form\OptionBag */
     protected $options = array();
 
     private $tag = array(
@@ -27,22 +27,27 @@ class Radio extends Field
     /**
      * Constructor
      *
-     * @param string                  $name       field name
-     * @param null|string             $value      field value (checked values)
-     * @param null|string             $label      field label
-     * @param bool                    $required   if true "required" tag will be inserted into label
-     * @param array                   $attributes additional attributes as associative array
-     * @param array|OptionInterface[] $options    array of Option instances
+     * @param string            $name       field name
+     * @param null              $address    field value
+     * @param array             $attributes additional attributes as associative array
+     * @param OptionInterface[] $options    array of Option instances
      */
-    public function __construct($name, $value = null, $label = null, $required = false, $attributes = array(), $options = array())
+    public function __construct($name, $address = null, array $attributes = array(), $options = array())
     {
+        $this->attributes = new AttributeBag($attributes);
+        $this->errors = new ErrorBag();
+        $this->options = new OptionBag($options);
+
         $this->name($name);
-        $this->value($value);
-        $this->label($label);
-        $this->required($required);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
-        $this->options = new OptionsBag($options);
+        $this->value($address);
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
+        }
+
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
@@ -59,7 +64,7 @@ class Radio extends Field
     /**
      * Returns options bag interface
      *
-     * @return OptionsBag
+     * @return OptionBag
      */
     public function options()
     {
@@ -73,18 +78,14 @@ class Radio extends Field
      */
     public function renderLabel()
     {
-        if (!$this->label) {
+        if (!$this->attributes->has('label') || ($this->options->count() == 1)) {
             return null;
         }
 
-        if (count($this->options) == 1) {
-            return parent::renderLabel();
-        }
-
         return sprintf(
-            '<span>%s</span>',
-            $this->label(),
-            $this->required() ? '<sup>*</sup>' : null
+            '<span>%s%s</span>',
+            $this->attributes->get('label'),
+            $this->attributes->get('required') ? '<sup>*</sup>' : null
         );
     }
 
@@ -98,16 +99,16 @@ class Radio extends Field
         $nodes = array();
 
         $nodes[] = sprintf(
-            '<%s %s>', $this->tag['group'], $this
-                         ->attributes()
-                         ->toString(array('id' => $this->identify()))
+            '<%s %s>',
+            $this->tag['group'],
+            $this->attributes->render(array('name' => null, 'label' => null, 'value' => null, 'required' => null))
         );
 
         $options = $this->options->all();
         $nodes[] = empty($options) ? $this->renderBlank() : $this->renderOptions($options);
         $nodes[] = sprintf('</%s>', $this->tag['group']);
 
-        return implode("\n", $nodes);
+        return implode(PHP_EOL, $nodes);
     }
 
     /**
@@ -117,46 +118,80 @@ class Radio extends Field
      */
     protected function renderBlank()
     {
-        return sprintf(
-            '<%1$s><input type="radio" name="%2$s" value="" id="%3$s"/><label for="%3$s" class="inline">---</label></%1$s>',
-            $this->tag['element'],
-            $this->name(),
-            $this->identify() . '_empty'
+        $attributes = array(
+            'id' => $this->identify() . '_empty',
+            'type' => 'radio',
+            'name' => $this->name() . '[]',
+            'label' => null,
+            'required' => $this->attributes->get('required') ? 'required' : null,
+            'checked' => null
         );
-    }
 
+        $field = sprintf(
+            '<input %1$s/><label for="%2$s" class="inline">%3$s</label>',
+            $this->attributes()
+                ->render($attributes),
+            $attributes['id'],
+            '--'
+        );
+
+        $field = sprintf(
+            '<%1$s class="options">%2$s</%1$s>',
+            $this->tag['element'],
+            $field
+        );
+
+        return $field;
+    }
 
     /**
      * Renders options
      *
      * @param array|OptionInterface[] $options
+     * @param int                     $i
      *
      * @return null|string
      */
-    protected function renderOptions(array $options)
+    protected function renderOptions(array $options, &$i = 0)
     {
         if (empty($options)) {
             return null;
         }
 
         $nodes = array();
-        foreach ($options as $Option) {
-            $nodes[] = $this->renderOption($Option);
+        foreach ($options as $option) {
+            $nodes[] = $this->renderOption($option, $i);
         }
 
-        return implode("\n", $nodes);
+        return implode(PHP_EOL, $nodes);
     }
 
     /**
      * Renders single checkbox button
      *
      * @param OptionInterface $Option
+     * @param int             $i
      *
      * @return string
      */
-    protected function renderOption(OptionInterface $Option)
+    protected function renderOption(OptionInterface $Option, &$i)
     {
-        $id = $this->identify() . '_' . $Option->identify();
+        $attributes = array(
+            'id' => $Option->identify() ? $Option->identify() : $this->identify() . '_' . $i++,
+            'type' => 'radio',
+            'name' => $this->name() . '[]',
+            'label' => null,
+            'required' => $this->attributes->get('required') ? 'required' : null,
+            'checked' => $Option->value() == $this->attributes->get('value') ? 'checked' : null
+        );
+
+        $field = sprintf(
+            '<input %1$s/><label for="%2$s" class="inline">%3$s</label>',
+            $Option->attributes()
+                ->render($attributes),
+            $attributes['id'],
+            $Option->label()
+        );
 
         $sub = null;
         $options = $Option
@@ -164,23 +199,13 @@ class Radio extends Field
             ->all();
 
         if (count($options)) {
-            $sub = sprintf(
-                '<%1$s class="options">%2$s</%1$s>',
-                $this->tag['group'],
-                "\n" . $this->renderOptions($options)
-            );
+            $sub = sprintf('<%1$s class="options">%2$s</%1$s>', $this->tag['group'], PHP_EOL . $this->renderOptions($options, $i));
         }
 
         $field = sprintf(
-            '<%1$s class="options"><input type="radio" name="%2$s" value="%4$s" id="%5$s" %6$s/><label for="%5$s" class="inline">%3$s</label>%7$s</%1$s>',
+            '<%1$s class="options">%2$s%3$s</%1$s>',
             $this->tag['element'],
-            $this->name(),
-            $Option->label(),
-            $Option->value(),
-            $id,
-            $Option
-                ->attributes()
-                ->toString(array('checked' => $Option->value() == $this->value ? 'checked' : null)),
+            $field,
             $sub
         );
 

@@ -1,8 +1,6 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\Field\Button;
-
 /**
  * Input/Submit
  *
@@ -20,14 +18,9 @@ class Submit extends Button
     public function renderField()
     {
         return sprintf(
-            '<button type="submit" name="%1$s" value="%2$s" id="%3$s" %5$s>%4$s</button>',
-            $this->name(),
-            $this->value(),
-            $this->identify(),
-            $this->label(),
-            $this
-                ->attributes()
-                ->toString()
+            '<button %s>%s</button>',
+            $this->attributes->render(array('type'=> 'submit', 'label' => null)),
+            $this->attributes->get('label')
         );
     }
 }

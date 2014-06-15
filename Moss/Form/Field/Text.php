@@ -6,7 +6,7 @@ use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
- * Input/Text
+ * Text field (one line)
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>

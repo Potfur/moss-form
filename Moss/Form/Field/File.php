@@ -1,8 +1,9 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributesBag;
-use Moss\Form\ErrorsBag;
+use Moss\Form\AttributeBag;
+use Moss\Form\ConditionException;
+use Moss\Form\ErrorBag;
 use Moss\Form\Field;
 
 /**
@@ -21,44 +22,26 @@ class File extends Field
      * Constructor
      *
      * @param string $name       field name
-     * @param null   $label      field label
-     * @param bool   $required   if true "required" tag will be inserted into label
+     * @param array  $value      field value
      * @param array  $attributes additional attributes as associative array
      */
-    public function __construct($name, $label = null, $required = false, $attributes = array())
+    public function __construct($name, array $value = array(), array $attributes = array())
     {
-        $this->name($name);
-        $this->value($this->getFilesValue());
-        $this->label($label, $required);
-        $this->attributes = new AttributesBag($attributes);
-        $this->errors = new ErrorsBag();
-    }
+        $this->attributes = new AttributeBag($attributes, array('class', 'value'));
+        $this->errors = new ErrorBag();
 
-    /**
-     * Sets field value
-     *
-     * @param mixed $value field value
-     *
-     * @return Field
-     */
-    public function value($value = null)
-    {
-        if ($value !== null) {
-            $this->value = (array) $value;
+        $this->name($name);
+
+        $this->attributes->set('value', array());
+        $this->value($value !== array() ? $value : $this->getFilesValue());
+
+        if (!$this->attributes->has('label')) {
+            $this->label($name);
         }
 
-        return $this->value;
-    }
-
-    /**
-     * Checks if field is visible
-     * By default all fields are visible
-     *
-     * @return bool
-     */
-    public function isVisible()
-    {
-        return true;
+        if (!$this->attributes->has('id')) {
+            $this->identify($name);
+        }
     }
 
     /**
@@ -73,7 +56,7 @@ class File extends Field
             return array();
         }
 
-        $path = preg_replace('/^([^[]+)(.*)$/i', '[$1][' . $this->marker . ']$2', $this->name);
+        $path = preg_replace('/^([^[]+)(.*)$/i', '[$1][' . $this->marker . ']$2', $this->attributes->get('name'));
         $path = preg_replace('/\[(.+)\]/imU', '[\'$1\']', $path);
         $path = str_replace('[]', null, $path);
 
@@ -96,6 +79,67 @@ class File extends Field
     }
 
     /**
+     * Sets field value
+     *
+     * @param array $value
+     *
+     * @return mixed
+     */
+    public function value($value = array())
+    {
+        if ($value !== array()) {
+            $this->attributes->set('value', $value);
+        }
+
+        return $this->attributes->get('value');
+    }
+
+    /**
+     * Checks if field is visible
+     * By default all fields are visible
+     *
+     * @return bool
+     */
+    public function isVisible()
+    {
+        return true;
+    }
+
+    /**
+     * Returns true if value meets condition
+     *
+     * @param array $value
+     * @param mixed $condition
+     *
+     * @return bool|int
+     * @throws ConditionException
+     */
+    protected function validate($value, $condition)
+    {
+        if (is_string($condition)) { // checks if condition is string (regexp)
+            $value = array_key_exists('type', $value) ? $value['type'] : null;
+            if (!preg_match($condition, $value)) {
+                return false;
+            }
+        } elseif (is_array($condition)) { // check if condition is array of permitted values
+            $value = array_key_exists('type', $value) ? $value['type'] : null;
+            if (!in_array($value, $condition)) {
+                return false;
+            }
+        } elseif (is_callable($condition)) { // checks if condition is closure
+            if (!$condition($value)) {
+                return false;
+            }
+        } elseif (is_bool($condition)) { // checks boolean
+            return $condition;
+        } else {
+            throw new ConditionException('Invalid condition for field "' . $this->attributes->get('name', 'unnamed') . '". Allowed condition types: regexp string, array of permitted values or closure');
+        }
+
+        return true;
+    }
+
+    /**
      * Renders field
      *
      * @return string
@@ -103,12 +147,14 @@ class File extends Field
     public function renderField()
     {
         return sprintf(
-            '<input type="file" name="%s" value="" id="%s" %s/>',
-            $this->name(),
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null))
+            '<input %s/>',
+            $this->attributes->render(
+                array(
+                    'type' => 'file',
+                    'label' => null,
+                    'value' => array(),
+                )
+            )
         );
     }
 }

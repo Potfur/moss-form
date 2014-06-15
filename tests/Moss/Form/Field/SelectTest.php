@@ -1,67 +1,312 @@
 <?php
-namespace Moss\Form\field;
+namespace Moss\Form\Field;
 
-use Moss\Form\AbstractFieldTest;
 use Moss\Form\Option;
 
-class SelectTest extends AbstractFieldTest
+class SelectTest extends \PHPUnit_Framework_TestCase
 {
 
-    public function setUp()
+    /**
+     * @dataProvider identifyProvider
+     */
+    public function testIdentifyFromConstructor($actual, $expected)
     {
-        $this->field = new Select('name', 'value', 'label', true, array('class' => 'foo'));
-        $this->field->options()
-                    ->set(array(new Option('Option 1', 'option_1'), new Option('Option 2', 'option_2')));
+        $field = new Select('name', 'value', array('id' => $actual));
+        $this->assertEquals($expected, $field->identify());
     }
 
-    public function tearDown()
+    /**
+     * @dataProvider identifyProvider
+     */
+    public function testIdentifyFromMethod($actual, $expected)
     {
+        $field = new Select('name', 'value', array());
+        $this->assertEquals($expected, $field->identify($actual));
+    }
+
+    public function identifyProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do_ku'),
+            array(null, 'name')
+        );
+    }
+
+    public function testIsVisible()
+    {
+        $field = new Select('name', 'value');
+        $this->assertTrue($field->isVisible());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromConstructor($actual, $expected)
+    {
+        $field = new Select('name', 'value', array('label' => $actual));
+        $this->assertEquals($expected, $field->label());
+    }
+
+    /**
+     * @dataProvider labelProvider
+     */
+    public function testLabelFromMethod($actual, $expected)
+    {
+        $field = new Select('name', 'value', array());
+        $this->assertEquals($expected, $field->label($actual));
+    }
+
+    public function labelProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromConstructor($actual, $expected)
+    {
+        $field = new Select($actual, 'value', array());
+        $this->assertEquals($expected, $field->name());
+    }
+
+    /**
+     * @dataProvider nameProvider
+     */
+    public function testNameFromMethod($actual, $expected)
+    {
+        $field = new Select(null, 'value', array());
+        $this->assertEquals($expected, $field->name($actual));
+    }
+
+    public function nameProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada_yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    /**
+     * @dataProvider valueProvider
+     */
+    public function testValueFromConstructor($actual, $expected)
+    {
+        $field = new Select('name', $actual, array());
+        $this->assertEquals($expected, $field->value());
+    }
+
+    /**
+     * @dataProvider valueProvider
+     */
+    public function testValueFromMethod($actual, $expected)
+    {
+        $field = new Select('name', null, array());
+        $this->assertEquals($expected, $field->value($actual));
+    }
+
+    public function valueProvider()
+    {
+        return array(
+            array('foo', 'foo'),
+            array('Bar', 'Bar'),
+            array('yada yada', 'yada yada'),
+            array('do[ku]', 'do[ku]')
+        );
+    }
+
+    public function testError()
+    {
+        $field = new Select('name', 'value', array());
+        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+    }
+
+    /**
+     * @dataProvider conditionProvider
+     */
+    public function testCondition($condition, $isValid)
+    {
+        $field = new Select('name', 'value', array('required' => true));
+        $field->condition($condition, 'Error');
+        $this->assertEquals($isValid, $field->isValid());
+    }
+
+    public function conditionProvider()
+    {
+        return array(
+            array('/^[a-z]+$/', true),
+            array('/^[0-9]+$/', false),
+            array(array('value'), true),
+            array(array(), false),
+            array(
+                function ($value) {
+                    return $value === 'value';
+                },
+                true
+            ),
+            array(
+                function ($value) {
+                    return $value !== 'value';
+                },
+                false,
+            ),
+            array(true, true),
+            array(false, false)
+        );
+    }
+
+    public function testRequired()
+    {
+        $field = new Select('name', 'value', array());
+        $this->assertFalse($field->required(false));
+        $this->assertTrue($field->required(true));
+    }
+
+    public function testAttributes()
+    {
+        $field = new Select('name', 'value', array());
+        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
     {
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>', $this->field->renderLabel());
+        $field = new Select('name', 'value', array('required'));
+        $this->assertEquals('<label for="name">name<sup>*</sup></label>', $field->renderLabel());
     }
 
     public function testRenderField()
     {
-        $field = '<select name="name" id="name" class="foo" required="required">
-<option value="option_1" id="name_option_1" >Option 1</option>
-<option value="option_2" id="name_option_2" >Option 2</option>
-</select>';
-        $this->assertEquals($field, $this->field->renderField());
+        $field = new Select('name', 'value', array('required'));
+
+        $expected = array(
+            '<select id="name" name="name" required="required">',
+            '<option value="" id="name_empty">---</option>',
+            '</select>'
+        );
+
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->renderField());
     }
 
-    public function testRenderNoOptions()
+    public function testRenderErrorWithoutErrors()
     {
-        $field = '<select name="name" id="name" class="foo" required="required">
-<option value="" id="name_empty">---</option>
-</select>';
-        $this->field->options()
-                    ->set(array());
-        $this->assertEquals($field, $this->field->renderField());
+        $field = new Select('name', 'value', array());
+        $this->assertEquals('', $field->renderError());
     }
 
-    public function testRenderError()
+    public function testRenderErrorWithErrors()
     {
-        $this->assertEquals('', $this->field->renderError());
+        $field = new Select('name', 'value', array());
+        $field->condition(false, 'Error');
+
+        $this->assertEquals('<ul class="error"><li>Error</li></ul>', $field->renderError());
     }
 
-    public function testRender()
+    public function testRenderNoOption()
     {
-        $field = '<select name="name" id="name" class="foo" required="required">
-<option value="option_1" id="name_option_1" >Option 1</option>
-<option value="option_2" id="name_option_2" >Option 2</option>
-</select>';
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>' . $field, $this->field->__toString());
+        $expected = array(
+            '<label for="id">label</label><select id="id" name="name" class="foo">',
+            '<option value="" id="id_empty">---</option>',
+            '</select>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'class' => array('foo')
+        );
+
+        $options = array();
+
+        $field = new Select('name', 'value', $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderOneOption()
+    {
+        $expected = array(
+            '<select id="id" name="name" required="required" class="foo">',
+            '<option id="id_0" value="1"/>Some label 1</option>',
+            '</select>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1)
+        );
+
+        $field = new Select('name', 'value', $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderMultipleOptions()
+    {
+        $expected = array(
+            '<label for="id">label<sup>*</sup></label><select id="id" name="name" required="required" class="foo">',
+            '<option id="id_0" value="1"/>Some label 1</option>',
+            '<option id="id_1" value="2"/>Some label 2</option>',
+            '</select>'
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1),
+            new Option('Some label 2', 2)
+        );
+
+        $field = new Select('name', 'value', $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
+    }
+
+    public function testRenderSubOptions()
+    {
+        $expected = array(
+            '<label for="id">label<sup>*</sup></label><select id="id" name="name" required="required" class="foo">',
+            '<option id="id_0" value="1"/>Some label 1</option><optgroup label="Some label 1"><option id="id_0" value="1.2"/>Some label 1.2</option></optgroup>',
+            '<option id="id_1" value="2"/>Some label 2</option>',
+            '</select>',
+        );
+
+        $attributes = array(
+            'id' => 'id',
+            'label' => 'label',
+            'required',
+            'class' => array('foo')
+        );
+
+        $options = array(
+            new Option('Some label 1', 1, array(), array(new Option('Some label 1.2', 1.2))),
+            new Option('Some label 2', 2)
+        );
+
+        $field = new Select('name', 'value', $attributes, $options);
+        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
     }
 
     public function testToString()
     {
-        $field = '<select name="name" id="name" class="foo" required="required">
-<option value="option_1" id="name_option_1" >Option 1</option>
-<option value="option_2" id="name_option_2" >Option 2</option>
-</select>';
-        $this->assertEquals('<label for="name">label<sup>*</sup></label>' . $field, $this->field->__toString());
+        $field = new Select('name', 'value', array('id' => 'id', 'label' => 'label', 'class' => array('foo')));
+        $this->assertEquals($field->render(), $field->__toString());
     }
 }

@@ -1,10 +1,8 @@
 <?php
 namespace Moss\Form\Field;
 
-use Moss\Form\Field\Text;
-
 /**
- * Tel HTML5 form field
+ * Telephone form field
  *
  * @package Moss Form
  * @author  Michal Wachowski <wachowski.michal@gmail.com>
@@ -15,18 +13,20 @@ class Tel extends Text
     /**
      * Renders field
      *
+     * @param mixed $value
+     *
      * @return string
      */
-    public function renderField()
+    public function renderField($value = null)
     {
         return sprintf(
-            '<input type="tel" name="%s" value="%s" id="%s" %s/>',
-            $this->name(),
-            $this->value(),
-            $this->identify(),
-            $this
-                ->attributes()
-                ->toString(array('required' => $this->required() ? 'required' : null))
+            '<input %s/>',
+            $this->attributes->render(
+                array(
+                    'type' => 'tel',
+                    'label' => null,
+                )
+            )
         );
     }
 }

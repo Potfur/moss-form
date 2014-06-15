@@ -16,10 +16,10 @@ class Date extends Field
 {
 
     /** @var string */
-    private $format = 'Y-m-d H:i:s';
+    protected $format = 'Y-m-d H:i:s';
 
     /** @var \DateTime */
-    private $value;
+    protected $value;
 
     /**
      * Constructor
