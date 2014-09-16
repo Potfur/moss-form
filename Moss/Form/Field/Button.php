@@ -1,8 +1,18 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributeBag;
-use Moss\Form\ErrorBag;
+use Moss\Form\Bag\AttributeBag;
+use Moss\Form\Bag\ErrorBag;
 use Moss\Form\Field;
 
 /**

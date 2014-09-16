@@ -13,6 +13,12 @@ class DateTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $field->identify());
     }
 
+    public function testIdentifyFromName()
+    {
+        $field = new Date('name', new \DateTime);
+        $this->assertEquals('name', $field->identify());
+    }
+
     /**
      * @dataProvider identifyProvider
      */
@@ -28,8 +34,7 @@ class DateTest extends \PHPUnit_Framework_TestCase
             array('foo', 'foo'),
             array('Bar', 'bar'),
             array('yada yada', 'yada_yada'),
-            array('do[ku]', 'do_ku'),
-            array(null, 'name')
+            array('do[ku]', 'do_ku')
         );
     }
 
@@ -125,7 +130,7 @@ class DateTest extends \PHPUnit_Framework_TestCase
     public function testError()
     {
         $field = new Date('name', new \DateTime, array());
-        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+        $this->assertInstanceOf('\Moss\Form\Bag\ErrorBag', $field->errors());
     }
 
     /**
@@ -175,7 +180,7 @@ class DateTest extends \PHPUnit_Framework_TestCase
     public function testAttributes()
     {
         $field = new Date('name', new \DateTime, array());
-        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
+        $this->assertInstanceOf('\Moss\Form\Bag\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
@@ -199,7 +204,8 @@ class DateTest extends \PHPUnit_Framework_TestCase
     public function testRenderErrorWithErrors()
     {
         $field = new Date('name', new \DateTime, array());
-        $field->condition(false, 'Error');
+        $field->condition(false, 'Error')
+            ->validate();
 
         $this->assertEquals('<ul class="error"><li>Error</li></ul>', $field->renderError());
     }
@@ -212,7 +218,7 @@ class DateTest extends \PHPUnit_Framework_TestCase
 
     public function testToString()
     {
-        $field = new Date('name', new \DateTime , array('id' => 'id', 'label' => 'label', 'required', 'class' => array('foo')));
+        $field = new Date('name', new \DateTime, array('id' => 'id', 'label' => 'label', 'required', 'class' => array('foo')));
         $this->assertEquals($field->render(), $field->__toString());
     }
 }

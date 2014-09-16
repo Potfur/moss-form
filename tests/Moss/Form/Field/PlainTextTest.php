@@ -97,7 +97,7 @@ class PlainTextTest extends \PHPUnit_Framework_TestCase
     public function testError()
     {
         $field = new PlainText('Some text', array());
-        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+        $this->assertInstanceOf('\Moss\Form\Bag\ErrorBag', $field->errors());
     }
 
     public function testRequired()
@@ -110,7 +110,7 @@ class PlainTextTest extends \PHPUnit_Framework_TestCase
     public function testAttributes()
     {
         $field = new PlainText('Some text', array());
-        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
+        $this->assertInstanceOf('\Moss\Form\Bag\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()

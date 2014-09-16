@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form;
 
 interface OptionInterface
@@ -35,14 +45,14 @@ interface OptionInterface
     /**
      * Returns attribute bag interface
      *
-     * @return \Moss\Form\AttributeBag
+     * @return \Moss\Form\Bag\AttributeBag
      */
     public function attributes();
 
     /**
      * Returns options bag interface
      *
-     * @return \Moss\Form\OptionBag
+     * @return \Moss\Form\Bag\OptionBag
      */
     public function options();
 }

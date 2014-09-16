@@ -1,8 +1,15 @@
 <?php
-namespace Moss\Form;
 
-use Moss\Form\FormInterface;
-use Moss\Form\Fieldset;
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Moss\Form;
 
 
 /**
@@ -98,6 +105,6 @@ class Form extends Fieldset implements FormInterface
         $nodes[] = '</fieldset>';
         $nodes[] = '</form>';
 
-        return implode("\n", $nodes);
+        return implode('', $nodes);
     }
 }

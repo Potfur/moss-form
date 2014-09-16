@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Moss\Form;
+namespace Moss\Form\Bag;
 
 /**
  * Field attribute bag
@@ -17,10 +17,8 @@ namespace Moss\Form;
  * @package  Moss Form
  * @author   Michal Wachowski <wachowski.michal@gmail.com>
  */
-class AttributeBag
+class AttributeBag extends AbstractBag implements BagInterface
 {
-    protected $storage = array();
-
     /**
      * List of multi valued attributes
      *
@@ -48,8 +46,8 @@ class AttributeBag
      */
     public function __construct($storage = array(), $multiValue = array('class'))
     {
-        $this->all($storage);
         $this->multiValue = $multiValue;
+        $this->all($storage);
     }
 
     /**
@@ -62,16 +60,6 @@ class AttributeBag
     private function isMultiValue($offset)
     {
         return in_array($offset, $this->multiValue);
-    }
-
-    /**
-     * Returns filtered array, without empty attributes
-     *
-     * @return array
-     */
-    private function filter()
-    {
-        return array_filter($this->storage);
     }
 
     /**
@@ -123,7 +111,7 @@ class AttributeBag
      *
      * @return string
      */
-    protected function strip($string, $strict = false)
+    private function strip($string, $strict = false)
     {
         $string = (string) $string;
         $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
@@ -141,23 +129,6 @@ class AttributeBag
     }
 
     /**
-     * Retrieves offset value
-     *
-     * @param string $offset
-     * @param mixed  $default
-     *
-     * @return mixed
-     */
-    public function get($offset = null, $default = null)
-    {
-        if ($offset === null) {
-            return $this->all();
-        }
-
-        return isset($this->storage[$offset]) ? $this->storage[$offset] : $default;
-    }
-
-    /**
      * Sets value to offset
      *
      * @param string $offset
@@ -165,9 +136,19 @@ class AttributeBag
      *
      * @return $this
      */
-    public function set($offset, $value)
+    public function set($offset, $value = null)
     {
-        if ($value === null) {
+        if ($offset === null) {
+            $this[] = $value;
+
+            return $this;
+        }
+
+        if (is_array($offset)) {
+            foreach ($offset as $key => $value) {
+                $this->set($key, $value);
+            }
+
             return $this;
         }
 
@@ -175,22 +156,6 @@ class AttributeBag
         $this->storage[$offset] = $this->escapeValue($offset, $value);
 
         return $this;
-    }
-
-    /**
-     * Returns true if offset exists in bag
-     *
-     * @param string $offset
-     *
-     * @return bool
-     */
-    public function has($offset = null)
-    {
-        if ($offset !== null) {
-            return isset($this->storage[$offset]);
-        }
-
-        return $this->count() > 0;
     }
 
     /**
@@ -212,11 +177,14 @@ class AttributeBag
             return $this;
         }
 
-        if (!is_scalar($value)) {
-            throw new AttributeException(sprintf('Unable to add to attribute %s, only scalar values, got %s', $offset, gettype($value)));
+        if (is_array($value)) {
+            foreach ($value as $node) {
+                $this->storage[$offset][] = $this->escapeValue($offset, $node);
+            }
+        } else {
+            $this->storage[$offset][] = $this->escapeValue($offset, $value);
         }
 
-        $this->storage[$offset][] = $this->escapeValue($offset, $value);
         $this->storage[$offset] = array_unique($this->storage[$offset]);
 
         return $this;
@@ -290,7 +258,7 @@ class AttributeBag
             }
         }
 
-        return $this->filter();
+        return $this->storage;
     }
 
     /**
@@ -312,133 +280,6 @@ class AttributeBag
         }
 
         return $attributes;
-    }
-
-    /**
-     * Removes all options
-     *
-     * @return $this
-     */
-    public function reset()
-    {
-        $this->storage = array();
-
-        return $this;
-    }
-
-    /**
-     * Whether a offset exists
-     *
-     * @param mixed $offset
-     *
-     * @return boolean true on success or false on failure.
-     */
-    public function offsetExists($offset)
-    {
-        return $this->has($offset);
-    }
-
-    /**
-     * Offset to retrieve
-     *
-     * @param mixed $offset
-     *
-     * @return mixed Can return all value types.
-     */
-    public function offsetGet($offset)
-    {
-        return $this->get($offset);
-    }
-
-    /**
-     * Offset to set
-     *
-     * @param mixed $offset
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function offsetSet($offset, $value)
-    {
-        $this->set($offset, $value);
-    }
-
-    /**
-     * Offset to unset
-     *
-     * @param mixed $offset
-     *
-     * @return void
-     */
-    public function offsetUnset($offset)
-    {
-        $this->remove($offset);
-    }
-
-    /**
-     * Count elements of an object
-     *
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->filter());
-    }
-
-    /**
-     * Return the current element
-     *
-     * @return mixed
-     */
-    public function current()
-    {
-        return current($this->storage);
-    }
-
-    /**
-     * Return the key of the current element
-     *
-     * @return mixed
-     */
-    public function key()
-    {
-        return key($this->storage);
-    }
-
-    /**
-     * Move forward to next element
-     *
-     * @return void
-     */
-    public function next()
-    {
-        next($this->storage);
-    }
-
-    /**
-     * Rewind the Iterator to the first element
-     *
-     * @return void
-     */
-    public function rewind()
-    {
-        reset($this->storage);
-    }
-
-    /**
-     * Checks if current position is valid
-     *
-     * @return bool
-     */
-    public function valid()
-    {
-        $offset = key($this->storage);
-
-        if ($offset === false || $offset === null) {
-            return false;
-        }
-
-        return isset($this->storage[$offset]);
     }
 
     /**

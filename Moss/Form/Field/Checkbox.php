@@ -1,11 +1,21 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributeBag;
-use Moss\Form\ErrorBag;
+use Moss\Form\Bag\AttributeBag;
+use Moss\Form\Bag\ErrorBag;
+use Moss\Form\Bag\OptionBag;
 use Moss\Form\Field;
 use Moss\Form\OptionInterface;
-use Moss\Form\OptionBag;
 use Moss\Form\ConditionException;
 
 /**
@@ -97,37 +107,35 @@ class Checkbox extends Field
 
     /**
      * Returns true if value meets condition
-
      *
-*@param array $value
+     * @param array $values
      * @param mixed $condition
-
      *
-*@return bool|int
+     * @return bool|int
      * @throws ConditionException
      */
-    protected function validate($value, $condition)
+    protected function validateValue($values, $condition)
     {
-        if (is_string($condition)) { // checks if condition is string (regexp)
-            foreach ($value as $value) {
+        if (is_bool($condition)) { // checks boolean, returns it
+            return $condition;
+        } elseif (is_scalar($condition)) { // checks if condition is string (regexp)
+            foreach ($values as $value) {
                 if (!preg_match($condition, $value)) {
                     return false;
                 }
             }
         } elseif (is_array($condition)) { // check if condition is array of permitted values
-            foreach ($value as $value) {
+            foreach ($values as $value) {
                 if (!in_array($value, $condition)) {
                     return false;
                 }
             }
         } elseif (is_callable($condition)) { // checks if condition is closure
-            foreach ($value as $value) {
+            foreach ($values as $value) {
                 if (!$condition($value)) {
                     return false;
                 }
             }
-        } elseif (is_bool($condition)) { // checks boolean
-            return $condition;
         } else {
             throw new ConditionException('Invalid condition for field "' . $this->attributes->get('name', 'unnamed') . '". Allowed condition types: regexp string, array of permitted values or closure');
         }

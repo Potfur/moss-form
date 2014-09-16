@@ -1,13 +1,23 @@
 <?php
-namespace Moss\Form;
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Moss\Form\Bag;
 
 /**
- * Options container
+ * Abstract bag
  *
- * @package Moss Form
- * @author  Michal Wachowski <wachowski.michal@gmail.com>
+ * @package  Form Bag
+ * @author   Michal Wachowski <wachowski.michal@gmail.com>
  */
-class OptionBag implements BagInterface
+class AbstractBag implements BagInterface
 {
     protected $storage = array();
 
@@ -35,7 +45,7 @@ class OptionBag implements BagInterface
             return $this->all();
         }
 
-        return isset($this->storage[$offset]) ? $this->storage[$offset] : $default;
+        return $this->has($offset) ? $this[$offset] : $default;
     }
 
     /**
@@ -49,11 +59,20 @@ class OptionBag implements BagInterface
     public function set($offset, $value = null)
     {
         if ($offset === null) {
-            array_push($this->storage, $value);
+            $this[] = $value;
+
             return $this;
         }
 
-        $this->storage[$offset] = $value;
+        if (is_array($offset)) {
+            foreach ($offset as $key => $value) {
+                $this[$key] = $value;
+            }
+
+            return $this;
+        }
+
+        $this[$offset] = $value;
 
         return $this;
     }
@@ -67,64 +86,30 @@ class OptionBag implements BagInterface
      */
     public function has($offset = null)
     {
-        if ($offset !== null) {
-            return isset($this->storage[$offset]);
-        }
-
-        return $this->count() > 0;
-    }
-
-    /**
-     * Adds value or values to offset
-     * Creates offset if it does not exists
-     *
-     * @param string       $offset offset to add to
-     * @param string|array $value  value or array of values added
-     *
-     * @return $this
-     */
-    public function add($offset, $value)
-    {
         if ($offset === null) {
-            array_push($this->storage, $value);
-
-            return $this;
+            return $this->count() > 0;
         }
 
-        $this->storage[$offset][] = $value;
-
-        return $this;
+        return array_key_exists($offset, $this->storage);
     }
-
 
     /**
      * Removes offset from bag
      * If no offset set, removes all values
      *
-     * @param string      $offset offset to remove from
-     * @param null|string $value  value to remove
+     * @param string $offset attribute to remove from
      *
      * @return $this
      */
-    public function remove($offset = null, $value = null)
+    public function remove($offset = null)
     {
-        if ($offset == null) {
-            $this->storage = array();
-        }
-
-        if (!isset($this->storage[$offset])) {
-            return $this;
-        }
-
-        if ($value !== null) {
-            while (!null === $i = array_search($value, $this->storage[$offset])) {
-                unset($this->storage[$offset][$i]);
-            }
+        if ($offset === null) {
+            $this->reset();
 
             return $this;
         }
 
-        unset($this->storage[$offset]);
+        $this->offsetUnset($offset);
 
         return $this;
     }
@@ -140,7 +125,11 @@ class OptionBag implements BagInterface
     public function all($array = array())
     {
         if ($array !== array()) {
-            $this->storage = $array;
+            $this->reset();
+
+            foreach ((array) $array as $offset => $value) {
+                $this[$offset] = $value;
+            }
         }
 
         return $this->storage;
@@ -177,9 +166,13 @@ class OptionBag implements BagInterface
      *
      * @return mixed Can return all value types.
      */
-    public function offsetGet($offset)
+    public function &offsetGet($offset)
     {
-        return $this->get($offset);
+        if (!$this->has($offset)) {
+            $this->storage[$offset] = null;
+        }
+
+        return $this->storage[$offset];
     }
 
     /**
@@ -192,7 +185,13 @@ class OptionBag implements BagInterface
      */
     public function offsetSet($offset, $value)
     {
-        $this->set($offset);
+        if ($offset === null) {
+            array_push($this->storage, $value);
+
+            return;
+        }
+
+        $this->storage[$offset] = $value;
     }
 
     /**
@@ -204,7 +203,7 @@ class OptionBag implements BagInterface
      */
     public function offsetUnset($offset)
     {
-        $this->remove($offset);
+        unset($this->storage[$offset]);
     }
 
     /**
@@ -271,37 +270,5 @@ class OptionBag implements BagInterface
         }
 
         return isset($this->storage[$offset]);
-    }
-
-    /**
-     * Returns error messages as string
-     *
-     * @param array $elements
-     *
-     * @return string
-     */
-    public function render(array $elements = array())
-    {
-        $storage = array_merge($elements, $this->storage);
-        if (empty($storage)) {
-            return null;
-        }
-
-        $result = array();
-        foreach ($storage as $msg) {
-            $result[] = sprintf('<li>%s</li>', $msg);
-        }
-
-        return sprintf('<ul class="error">%s</ul>', implode('', $result));
-    }
-
-    /**
-     * Returns error messages as string
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->render();
     }
 }

@@ -13,6 +13,12 @@ class MailTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $field->identify());
     }
 
+    public function testIdentifyFromName()
+    {
+        $field = new Mail('name', 'value');
+        $this->assertEquals('name', $field->identify());
+    }
+
     /**
      * @dataProvider identifyProvider
      */
@@ -29,7 +35,6 @@ class MailTest extends \PHPUnit_Framework_TestCase
             array('Bar', 'bar'),
             array('yada yada', 'yada_yada'),
             array('do[ku]', 'do_ku'),
-            array(null, 'name')
         );
     }
 
@@ -126,7 +131,7 @@ class MailTest extends \PHPUnit_Framework_TestCase
     public function testError()
     {
         $field = new Mail('name', 'value', array());
-        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+        $this->assertInstanceOf('\Moss\Form\Bag\ErrorBag', $field->errors());
     }
 
     /**
@@ -173,7 +178,7 @@ class MailTest extends \PHPUnit_Framework_TestCase
     public function testAttributes()
     {
         $field = new Mail('name', 'value', array());
-        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
+        $this->assertInstanceOf('\Moss\Form\Bag\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
@@ -197,7 +202,8 @@ class MailTest extends \PHPUnit_Framework_TestCase
     public function testRenderErrorWithErrors()
     {
         $field = new Mail('name', 'value', array());
-        $field->condition(false, 'Error');
+        $field->condition(false, 'Error')
+            ->validate();
 
         $this->assertEquals('<ul class="error"><li>Error</li></ul>', $field->renderError());
     }

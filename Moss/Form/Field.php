@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form;
 
 /**
@@ -10,12 +20,17 @@ namespace Moss\Form;
 abstract class Field implements FieldInterface
 {
     /**
-     * @var \Moss\Form\AttributeBag
+     * @var \Moss\Form\Bag\AttributeBag
      */
     protected $attributes;
 
     /**
-     * @var \Moss\Form\ErrorBag
+     * @var array
+     */
+    protected $conditions = array();
+
+    /**
+     * @var \Moss\Form\Bag\ErrorBag
      */
     protected $errors;
 
@@ -29,7 +44,7 @@ abstract class Field implements FieldInterface
      */
     public function identify($identifier = null)
     {
-        if ($identifier) {
+        if ($identifier !== null) {
             $this->attributes->set('id', $identifier);
         } elseif (!$this->attributes->has('id')) {
             $this->attributes->set('id', $this->attributes->get('name'));
@@ -115,17 +130,32 @@ abstract class Field implements FieldInterface
      */
     public function condition($condition, $message)
     {
+        $this->conditions[] = array(
+            'condition' => $condition,
+            'message' => $message
+        );
+
+        return $this;
+    }
+
+    /**
+     * Validates field
+     *
+     * @return $this
+     */
+    public function validate()
+    {
         if (!$this->attributes->get('required') && $this->attributes->get('value') === null) {
             return $this;
         }
 
-        if (!$this->validate($this->attributes->get('value'), $condition)) {
-            $this->errors->add(null, $message);
+        foreach ($this->conditions as $node) {
+            if (!$this->validateValue($this->attributes->get('value'), $node['condition'])) {
+                $this->errors->add($node['message']);
+            }
         }
 
-        $count = $this->errors->count();
-
-        if ($count) {
+        if ($this->errors->count()) {
             $this->attributes->add('class', 'error');
         }
 
@@ -141,7 +171,7 @@ abstract class Field implements FieldInterface
      * @return bool|int
      * @throws ConditionException
      */
-    protected function validate($value, $condition)
+    protected function validateValue($value, $condition)
     {
         if (is_bool($condition)) { // checks boolean
             return $condition;
@@ -159,7 +189,7 @@ abstract class Field implements FieldInterface
     /**
      * Returns attribute bag interface
      *
-     * @return \Moss\Form\AttributeBag
+     * @return \Moss\Form\Bag\AttributeBag
      */
     public function attributes()
     {
@@ -173,13 +203,15 @@ abstract class Field implements FieldInterface
      */
     public function isValid()
     {
+        $this->validate();
+
         return !$this->errors->has();
     }
 
     /**
      * Returns all error messages
      *
-     * @return \Moss\Form\ErrorBag
+     * @return \Moss\Form\Bag\ErrorBag
      */
     public function errors()
     {

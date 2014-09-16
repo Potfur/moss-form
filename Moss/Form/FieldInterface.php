@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form;
 
 use Moss\Form\ElementInterface;
@@ -62,9 +72,16 @@ interface FieldInterface extends ElementInterface
     public function condition($condition, $message);
 
     /**
+     * Validates field
+     *
+     * @return $this
+     */
+    public function validate();
+
+    /**
      * Returns attribute bag interface
      *
-     * @return AttributesBag
+     * @return \Moss\Form\Bag\AttributeBag
      */
     public function attributes();
 

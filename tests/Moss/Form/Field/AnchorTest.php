@@ -13,6 +13,12 @@ class AnchorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $field->identify());
     }
 
+    public function testIdentifyFromName()
+    {
+        $field = new Anchor('Google it', 'http://google.com');
+        $this->assertEquals('google_it', $field->identify());
+    }
+
     /**
      * @dataProvider identifyProvider
      */
@@ -29,7 +35,6 @@ class AnchorTest extends \PHPUnit_Framework_TestCase
             array('Bar', 'bar'),
             array('yada yada', 'yada_yada'),
             array('do[ku]', 'do_ku'),
-            array(null, 'google_it')
         );
     }
 
@@ -126,7 +131,7 @@ class AnchorTest extends \PHPUnit_Framework_TestCase
     public function testError()
     {
         $field = new Anchor('Google it', 'http://google.com', array());
-        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+        $this->assertInstanceOf('\Moss\Form\Bag\ErrorBag', $field->errors());
     }
 
     public function testRequired()
@@ -139,7 +144,7 @@ class AnchorTest extends \PHPUnit_Framework_TestCase
     public function testAttributes()
     {
         $field = new Anchor('Google it', 'http://google.com', array());
-        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
+        $this->assertInstanceOf('\Moss\Form\Bag\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()

@@ -1,8 +1,18 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributeBag;
-use Moss\Form\ErrorBag;
+use Moss\Form\Bag\AttributeBag;
+use Moss\Form\Bag\ErrorBag;
 use Moss\Form\Field;
 use Moss\Form\ConditionException;
 
@@ -108,17 +118,32 @@ class Date extends Field
      */
     public function condition($condition, $message)
     {
+        $this->conditions[] = array(
+            'condition' => $condition,
+            'message' => $message
+        );
+
+        return $this;
+    }
+
+    /**
+     * Validates field
+     *
+     * @return $this
+     */
+    public function validate()
+    {
         if (!$this->attributes->get('required') && $this->value === null) {
             return $this;
         }
 
-        if (!$this->validate($this->value->format($this->format), $condition)) {
-            $this->errors->add(null, $message);
+        foreach ($this->conditions as $node) {
+            if (!$this->validateValue($this->value->format($this->format), $node['condition'])) {
+                $this->errors->add($node['message']);
+            }
         }
 
-        $count = $this->errors->count();
-
-        if ($count) {
+        if ($this->errors->count()) {
             $this->attributes->add('class', 'error');
         }
 

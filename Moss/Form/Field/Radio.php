@@ -1,11 +1,21 @@
 <?php
+
+/*
+ * This file is part of the Moss form package
+ *
+ * (c) Michal Wachowski <wachowski.michal@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Moss\Form\Field;
 
-use Moss\Form\AttributeBag;
-use Moss\Form\ErrorBag;
+use Moss\Form\Bag\AttributeBag;
+use Moss\Form\Bag\ErrorBag;
+use Moss\Form\Bag\OptionBag;
 use Moss\Form\Field;
 use Moss\Form\OptionInterface;
-use Moss\Form\OptionBag;
 
 /**
  * Radio form field
@@ -16,7 +26,7 @@ use Moss\Form\OptionBag;
 class Radio extends Field
 {
 
-    /** @var array|\Moss\Form\OptionBag */
+    /** @var OptionBag */
     protected $options = array();
 
     private $tag = array(
@@ -27,10 +37,10 @@ class Radio extends Field
     /**
      * Constructor
      *
-     * @param string            $name       field name
-     * @param null              $address    field value
-     * @param array             $attributes additional attributes as associative array
-     * @param OptionInterface[] $options    array of Option instances
+     * @param string $name       field name
+     * @param null   $address    field value
+     * @param array  $attributes additional attributes as associative array
+     * @param array  $options    array of Option instances
      */
     public function __construct($name, $address = null, array $attributes = array(), $options = array())
     {

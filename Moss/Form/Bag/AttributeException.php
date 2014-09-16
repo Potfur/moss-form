@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Moss\Form;
+namespace Moss\Form\Bag;
 
-class OptionException extends ElementException
+class AttributeException extends BagException
 {
 
 }

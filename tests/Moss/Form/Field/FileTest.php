@@ -13,6 +13,12 @@ class FileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $field->identify());
     }
 
+    public function testIdentifyFromName()
+    {
+        $field = new File('name', array(), array());
+        $this->assertEquals('name', $field->identify());
+    }
+
     /**
      * @dataProvider identifyProvider
      */
@@ -28,8 +34,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
             array('foo', 'foo'),
             array('Bar', 'bar'),
             array('yada yada', 'yada_yada'),
-            array('do[ku]', 'do_ku'),
-            array(null, 'name')
+            array('do[ku]', 'do_ku')
         );
     }
 
@@ -203,7 +208,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     public function testError()
     {
         $field = new File('name', array(), array());
-        $this->assertInstanceOf('\Moss\Form\ErrorBag', $field->errors());
+        $this->assertInstanceOf('\Moss\Form\Bag\ErrorBag', $field->errors());
     }
 
     /**
@@ -258,7 +263,7 @@ class FileTest extends \PHPUnit_Framework_TestCase
     public function testAttributes()
     {
         $field = new File('name', array(), array());
-        $this->assertInstanceOf('\Moss\Form\AttributeBag', $field->attributes());
+        $this->assertInstanceOf('\Moss\Form\Bag\AttributeBag', $field->attributes());
     }
 
     public function testRenderLabel()
@@ -282,7 +287,8 @@ class FileTest extends \PHPUnit_Framework_TestCase
     public function testRenderErrorWithErrors()
     {
         $field = new File('name', array(), array());
-        $field->condition(false, 'Error');
+        $field->condition(false, 'Error')
+            ->validate();
 
         $this->assertEquals('<ul class="error"><li>Error</li></ul>', $field->renderError());
     }

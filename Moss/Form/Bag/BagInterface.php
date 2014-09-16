@@ -9,12 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Moss\Form;
-
+namespace Moss\Form\Bag;
 /**
  * Parameter bag interface
  *
- * @package  Moss Form
+ * @package  Form Bag
  * @author   Michal Wachowski <wachowski.michal@gmail.com>
  */
 interface BagInterface extends \ArrayAccess, \Iterator, \Countable
@@ -23,10 +22,11 @@ interface BagInterface extends \ArrayAccess, \Iterator, \Countable
      * Retrieves offset value
      *
      * @param string $offset
+     * @param mixed  $default
      *
      * @return mixed
      */
-    public function get($offset = null);
+    public function get($offset = null, $default = null);
 
     /**
      * Sets value to offset
@@ -36,7 +36,7 @@ interface BagInterface extends \ArrayAccess, \Iterator, \Countable
      *
      * @return $this
      */
-    public function set($offset, $value);
+    public function set($offset, $value = null);
 
     /**
      * Returns true if offset exists in bag
@@ -48,21 +48,10 @@ interface BagInterface extends \ArrayAccess, \Iterator, \Countable
     public function has($offset = null);
 
     /**
-     * Adds value or values to offset
-     * Creates offset if it does not exists
-     *
-     * @param string       $offset offset to add to
-     * @param string|array $value  value or array of values added
-     *
-     * @return $this
-     */
-    public function add($offset, $value);
-
-    /**
      * Removes offset from bag
      * If no offset set, removes all values
      *
-     * @param string $offset offset to remove from
+     * @param string $offset attribute to remove from
      *
      * @return $this
      */
@@ -84,11 +73,4 @@ interface BagInterface extends \ArrayAccess, \Iterator, \Countable
      * @return $this
      */
     public function reset();
-
-    /**
-     * Returns attributes as string
-     *
-     * @return string
-     */
-    function __toString();
 }
