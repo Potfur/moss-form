@@ -237,29 +237,6 @@ class CheckboxTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
     }
 
-    public function testRenderOneOption()
-    {
-        $expected = array(
-            '<ul id="id" class="foo">',
-            '<li class="options"><input type="checkbox" id="id_0" name="name[]" value="1" required="required"/><label for="id_0" class="inline">Some label 1</label></li>',
-            '</ul>'
-        );
-
-        $attributes = array(
-            'id' => 'id',
-            'label' => 'label',
-            'required',
-            'class' => array('foo')
-        );
-
-        $options = array(
-            new Option('Some label 1', 1)
-        );
-
-        $field = new Checkbox('name', array('value'), $attributes, $options);
-        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
-    }
-
     public function testRenderMultipleOptions()
     {
         $expected = array(

@@ -237,29 +237,6 @@ class SelectTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
     }
 
-    public function testRenderOneOption()
-    {
-        $expected = array(
-            '<select id="id" name="name" required="required" class="foo">',
-            '<option id="id_0" value="1"/>Some label 1</option>',
-            '</select>'
-        );
-
-        $attributes = array(
-            'id' => 'id',
-            'label' => 'label',
-            'required',
-            'class' => array('foo')
-        );
-
-        $options = array(
-            new Option('Some label 1', 1)
-        );
-
-        $field = new Select('name', 'value', $attributes, $options);
-        $this->assertEquals(implode(PHP_EOL, $expected), $field->render());
-    }
-
     public function testRenderMultipleOptions()
     {
         $expected = array(

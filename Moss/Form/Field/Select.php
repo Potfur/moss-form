@@ -29,7 +29,7 @@ class Select extends Radio
      */
     public function renderLabel()
     {
-        if (!$this->attributes->has('label') || ($this->options->count() == 1)) {
+        if (!$this->attributes->has('label')) {
             return null;
         }
 
