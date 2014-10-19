@@ -189,7 +189,7 @@ class Radio extends Field
         $attributes = array(
             'id' => $Option->identify() ? $Option->identify() : $this->identify() . '_' . $i++,
             'type' => 'radio',
-            'name' => $this->name() . '[]',
+            'name' => $this->name(),
             'label' => null,
             'required' => $this->attributes->get('required') ? 'required' : null,
             'checked' => $Option->value() == $this->attributes->get('value') ? 'checked' : null
