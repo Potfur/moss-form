@@ -24,7 +24,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @var array
      */
-    private $multiValue = array(
+    protected $multiValue = array(
         'class'
     );
 
@@ -33,7 +33,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @var array
      */
-    private $escapedValues = array(
+    protected $escapedValues = array(
         'id' => true,
         'name' => false
     );
@@ -57,7 +57,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @return bool
      */
-    private function isMultiValue($offset)
+    protected function isMultiValue($offset)
     {
         return in_array($offset, $this->multiValue);
     }
@@ -70,7 +70,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @throws AttributeException
      */
-    private function assertArrayValue($offset, $value)
+    protected function assertArrayValue($offset, $value)
     {
         if ($this->isMultiValue($offset) && !is_array($value)) {
             throw new AttributeException(sprintf('Invalid value for attribute %s, only array values, got %s', $offset, gettype($value)));
@@ -90,7 +90,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      * @return mixed
      * @throws AttributeException
      */
-    private function escapeValue($offset, $value)
+    protected function escapeValue($offset, $value)
     {
         if (!array_key_exists($offset, $this->escapedValues)) {
             return $value;
@@ -111,7 +111,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @return string
      */
-    private function strip($string, $strict = false)
+    protected function strip($string, $strict = false)
     {
         $string = (string) $string;
         $string = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
@@ -226,7 +226,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @return $this
      */
-    private function removeMultiValue($offset, $value)
+    protected function removeMultiValue($offset, $value)
     {
         if (!$this->isMultiValue($offset)) {
             return $this;
@@ -321,7 +321,7 @@ class AttributeBag extends AbstractBag implements BagInterface
      *
      * @return string
      */
-    function __toString()
+    public function __toString()
     {
         return (string) $this->render();
     }
