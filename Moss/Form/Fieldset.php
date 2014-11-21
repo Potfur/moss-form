@@ -113,11 +113,14 @@ class Fieldset extends AbstractBag implements FieldsetInterface
                 continue;
             }
 
-            if (!$element->errors()->has()) {
+            if (!$element->errors()
+                ->has()
+            ) {
                 continue;
             }
 
-            foreach ($element->errors()->all() as $error) {
+            foreach ($element->errors()
+                ->all() as $error) {
                 $errors->add(null, $error);
             }
         }
@@ -164,6 +167,34 @@ class Fieldset extends AbstractBag implements FieldsetInterface
         $str = str_replace(array("\r", "\n"), null, $str);
 
         return $str;
+    }
+
+    /**
+     * Sets group tag
+     *
+     * @param string $tag
+     *
+     * @return $this
+     */
+    public function groupTag($tag)
+    {
+        $this->tag['group'] = (string) $tag;
+
+        return $this;
+    }
+
+    /**
+     * Sets tag for elements
+     *
+     * @param string $tag
+     *
+     * @return $this
+     */
+    public function elementTag($tag)
+    {
+        $this->tag['element'] = (string) $tag;
+
+        return $this;
     }
 
     /**

@@ -346,5 +346,24 @@ class FormTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($form->render(), (string) $form);
     }
+
+    public function testRenderWithDifferentTags()
+    {
+        $field = $this->getMock('\Moss\Form\FieldInterface');
+
+        $field->expects($this->any())
+            ->method('isVisible')
+            ->will($this->returnValue(true));
+
+        $field->expects($this->any())
+            ->method('render')
+            ->will($this->returnValue('{visible}'));
+
+        $form = new Form('./', 'post', array('class' => array('foo', 'bar')));
+        $form->set('visible', $field)
+            ->groupTag('div')
+            ->elementTag('span');
+
+        $this->assertEquals('<form enctype="multipart/form-data" method="post" action="./" class="foo bar"><fieldset><div class="foo bar"><span>{visible}</span></div></fieldset></form>', $form->render());
+    }
 }
- 

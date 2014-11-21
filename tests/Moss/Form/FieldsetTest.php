@@ -338,5 +338,23 @@ class FieldsetTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($fieldset->render(), (string) $fieldset);
     }
+
+    public function testRenderWithDifferentTags()
+    {
+        $field = $this->getMock('\Moss\Form\FieldInterface');
+
+        $field->expects($this->any())
+            ->method('isVisible')
+            ->will($this->returnValue(true));
+
+        $field->expects($this->any())
+            ->method('render')
+            ->will($this->returnValue('{visible}'));
+
+        $fieldset = new Fieldset('Label', array($field), array('class' => array('foo', 'bar')));
+        $fieldset->groupTag('div')
+            ->elementTag('span');
+
+        $this->assertEquals('<legend>Label</legend><div class="foo bar"><span>{visible}</span></div>', $fieldset->render());
+    }
 }
- 

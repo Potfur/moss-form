@@ -34,7 +34,7 @@ interface FieldsetInterface extends ElementInterface, BagInterface
     /**
      * Returns attribute bag interface
      *
-     * @return \Moss\Form\AttributeAbstractBag
+     * @return \Moss\Form\Bag\AttributeBag
      */
     public function attributes();
 
@@ -44,4 +44,22 @@ interface FieldsetInterface extends ElementInterface, BagInterface
      * @return string
      */
     public function prototype();
+
+    /**
+     * Sets group tag
+     *
+     * @param string $tag
+     *
+     * @return $this
+     */
+    public function groupTag($tag);
+
+    /**
+     * Sets tag for elements
+     *
+     * @param string $tag
+     *
+     * @return $this
+     */
+    public function elementTag($tag);
 }
