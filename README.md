@@ -95,11 +95,13 @@ Validation is easy - each condition can be:
  * `array` - array containing valid values,
  * `callable` - function, class,
  
+```
 	$field = new Text('id', 'foo');
 	$errors = $field->condition(array('bar', 'yada'), 'Must contain foo or yada')
 		->validate()
 		->errors()
 		->all(); 
+```
 		
 Also, its worthy to notice that if field has not been set to `required`, no validation will be made when no value is set.
 
