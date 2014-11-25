@@ -97,7 +97,7 @@ Validation is easy - each condition can be:
  
 ```
 	$field = new Text('id', 'foo');
-	$errors = $field->condition(array('bar', 'yada'), 'Must contain foo or yada')
+	$errors = $field->condition(array('bar', 'yada'), 'Must contain bar or yada')
 		->validate()
 		->errors()
 		->all(); 
