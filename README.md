@@ -123,7 +123,6 @@ Also - `Option` has its own `OptionBag` instance - this means that `Option` can 
 # Example
 
 	<?php
-	use Cms\Entity\Author;
 	use Moss\Form\Field\Anchor;
 	use Moss\Form\Field\Hidden;
 	use Moss\Form\Field\Radio;
